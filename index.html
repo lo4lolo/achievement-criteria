@@ -128,7 +128,8 @@ mark{background:var(--mark);color:inherit;font-weight:700;border-radius:2px;padd
 .tlband:before{content:"";position:absolute;left:-16px;top:7px;width:9px;height:9px;border-radius:50%;background:var(--bg);border:2px solid var(--ink)}
 .tlband.cur:before{background:var(--ink)}
 .tlname{font-size:12px;font-weight:800;color:var(--dim);margin-bottom:6px}
-.tlrow{display:flex;gap:8px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;margin-bottom:5px;cursor:pointer;font-size:13px;align-items:flex-start}
+.tlrow{display:flex;gap:9px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;margin-bottom:5px;cursor:pointer;font-size:13px;align-items:flex-start}
+.tlrow .code{white-space:nowrap;flex:none}
 .tlrow:hover{border-color:var(--ink);background:var(--soft)}
 .tlrow.me{border-color:var(--ink);background:var(--soft);font-weight:600}
 
@@ -272,7 +273,7 @@ const areaOf = r => AREAIDX.get(r.b+'|'+r.s+'|'+r.ak);
 
 /* ---------- 형태 정리 / 토큰 ---------- */
 const JOSA=/(으로써|으로서|이라는|라는|에서의|에게서|으로|에서|에게|부터|까지|보다|처럼|과의|와의|의|을|를|이|가|은|는|에|와|과|로|도|만|나|며|고)$/;
-const EOMI=/(하였다|하였고|합니다|한다|하는|하여|하고|하며|하기|할|함|됨|되는|되어|되고|된|있다|있는|이다|인|적인|적으로|적|들)$/;
+const EOMI=/(하였다|하였고|합니다|한다|하는|하여|하고|하며|하기|할|함|됨|되는|되어|되고|된|있다|있는|이다|으면서|면서|인|적인|적으로|적|들)$/;
 const STOP=new Set(('수 등 및 것 그 이 저 때 더 잘 또 통해 위해 위한 위하여 대해 관해 다양 다양한 여러 여러가지 '+
  '가지 자신 우리 서로 무엇 어떻 있다 있음 한다 하기 대한 관한 알맞 알맞은 적절 적절한 정확 정확하게 부분 부분적 '+
  '일부 적극 적극적 다소 대체 대체로 능숙 간단 간단한 안내 절차 주어진 제시 따라 찾아 구체 다른 기본 바탕 통하여 '+
@@ -340,14 +341,19 @@ function catProfile(r){
 }
 const mainCat = r => CATS[catProfile(r).indexOf(Math.max(...catProfile(r)))];
 
-/* ---------- 개념어 ---------- */
+/* ---------- 개념어 ----------
+   성취기준 본문에서만 뽑고, 동사 어간(이루어지는·살펴보고 …)은 개념으로 보지 않는다. */
+const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const isVerbStem=(t,text)=> new RegExp(esc(t)+'(는|며|여|고|어|아|게|던)').test(text);
 function conceptsOf(r,k){
   if(!r._con){
-    r._con=[...r._v.entries()]
-      .filter(([t])=> { const df=DF.get(t); return df>=2 && df<=N*0.07; })
+    const cand=[...vecFromTf(new Map((()=>{ const m=new Map();
+        tokens(r.t).forEach(t=>m.set(t,(m.get(t)||0)+1)); return m; })())).entries()]
+      .filter(([t])=>{ const df=DF.get(t);
+        return df>=2 && df<=N*0.07 && !/다$/.test(t) && !isVerbStem(t,r.t); })
       .sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
     const out=[];
-    for(const t of r._con){ if(out.some(o=>o.startsWith(t)||t.startsWith(o))) continue; out.push(t); if(out.length>=8) break; }
+    for(const t of cand){ if(out.some(o=>o.startsWith(t)||t.startsWith(o))) continue; out.push(t); if(out.length>=8) break; }
     r._con=out;
   }
   return k? r._con.slice(0,k) : r._con;
@@ -425,9 +431,11 @@ function currentAreas(){
   STD.forEach(r=>{
     if(S.bands.size && !S.bands.has(r.b)) return;
     if(S.subjs.size && !S.subjs.has(r.s)) return;
-    if(!seen.has(r.ak)) seen.set(r.ak,{v:r.ak,label:r.a,n:0,bands:new Set(),sr:r.sr});
-    const e=seen.get(r.ak); e.n++; e.bands.add(r.b);
+    if(!seen.has(r.ak)) seen.set(r.ak,{v:r.ak,label:r.a,n:0,bands:new Set(),sr:r.sr,s:r.s});
+    seen.get(r.ak).n++;
   });
+  // 걸쳐 있는 학년군은 학년군 필터와 무관하게 원자료 기준으로 표시한다
+  seen.forEach(e=>STD.forEach(r=>{ if(r.s===e.s && r.ak===e.v) e.bands.add(r.b); }));
   return [...seen.values()];
 }
 function syncAreas(){ const ok=new Set(currentAreas().map(a=>a.v)); [...S.areas].forEach(a=>{ if(!ok.has(a)) S.areas.delete(a); }); renderAreaChips(); }
@@ -716,11 +724,16 @@ function paneRel(pane,r){
 
 /* ---------- 개념 지도 (온톨로지) ---------- */
 function paneOnto(pane,r){
-  pane.appendChild(hintBox('가운데가 지금 보는 성취기준입니다. 둘레의 동그라미는 이 성취기준이 다루는 개념이고, 바깥 네모는 같은 개념을 함께 다루는 다른 성취기준입니다. 네모를 누르면 그 성취기준으로 옮겨 갑니다.'));
+  const modes=[['bandCross','같은 학년군 · 다른 교과'],['band','같은 학년군 전체'],['subject','같은 교과'],['all','전체']];
+  const m=el('div','dact'); m.style.marginBottom='9px';
+  modes.forEach(([k,l])=>{ const b=el('button','btn'+(S.relMode===k?' on':''),l);
+    b.onclick=()=>{ S.relMode=k; renderDetail(); }; m.appendChild(b); });
+  pane.appendChild(m);
+  pane.appendChild(hintBox('가운데가 지금 보는 성취기준, 가운데 동그라미는 이 성취기준이 다루는 개념, 오른쪽 네모는 같은 개념을 함께 다루는 성취기준입니다. 네모를 누르면 그 성취기준으로 옮겨 갑니다. 수학처럼 교과 고유 개념이 많으면 범위를 「같은 교과」로 바꿔 보세요.'));
 
   /* 좌 → 우 계층 배치: [학년군 위계] [중심 성취기준] [개념] [같은 개념을 다루는 성취기준] */
   const cons=conceptsOf(r,5);
-  const pool=new Set(STD.filter(o=>o!==r && scopeFilter(r,o,S.relMode==='all'?'band':S.relMode)));
+  const pool=new Set(STD.filter(o=>o!==r && scopeFilter(r,o,S.relMode)));
   const used=new Set([r.c]);
   const groups=[];
   cons.forEach(t=>{

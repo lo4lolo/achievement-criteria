@@ -3,8 +3,7 @@
 초등학교 1~2 / 3~4 / 5~6학년군의 **성취기준 611개**와 **영역별 성취수준 126개**를
 한 화면에서 찾아보고 내려받는 도구입니다. 파일 하나로 동작하며 인터넷 없이도 열립니다.
 
-**바로 쓰기 →** https://USERNAME.github.io/REPO/
-*(게시 후 이 주소를 실제 주소로 고쳐 주세요)*
+**바로 쓰기 →** https://lo4lolo.github.io/achievement-criteria/
 
 ## 무엇을 할 수 있나요
 
@@ -24,10 +23,10 @@
 
 ## GitHub Pages로 게시하기
 
-1. 이 저장소의 **Settings → Pages** 로 갑니다.
+1. 저장소의 **Settings → Pages** 로 갑니다.
 2. **Source** 를 `Deploy from a branch` 로 둡니다.
-3. **Branch** 에서 이 브랜치와 `/ (root)` 를 고르고 **Save** 합니다.
-4. 1~2분 뒤 `https://<아이디>.github.io/<저장소>/` 에서 열립니다.
+3. **Branch** 에서 `achievement-criteria` 와 `/ (root)` 를 고르고 **Save** 합니다.
+4. 1~2분 뒤 https://lo4lolo.github.io/achievement-criteria/ 에서 열립니다.
 
 ## 구글 사이트에 넣기
 

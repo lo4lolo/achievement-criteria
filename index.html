@@ -218,6 +218,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
   <button class="btn" id="cartView">목록</button>
   <button class="btn" id="cartCopy">표로 복사</button>
   <button class="btn" id="cartCsv">CSV</button>
+  <button class="btn" id="cartPlan">평가계획 CSV</button>
   <button class="btn on" id="cartMd">MD 내려받기</button>
   <button class="btn" id="cartPrint">인쇄/PDF</button>
   <button class="btn" id="cartClear">비우기</button>
@@ -566,6 +567,97 @@ function hl(text,terms){
 }
 
 /* ============================================================
+   수업·평가 계획 초안 (AI 생성 — 반드시 교사 검토)
+   ============================================================ */
+/* 성취기준이 속한 '영역' — 내용 체계 영역을 우선한다 (사용자가 고른 값 포함) */
+const areaKeyOf = r => domName(r) || r.a;
+
+/* 성취기준 문장을 '~하기' 꼴 활동 이름으로 다듬는다 */
+function toActivity(t){
+  let x=(t||'').replace(/\s*$/,'').replace(/\.$/,'');
+  x=x.replace(/할\s*수\s*있다$/,'하기').replace(/([가-힣])한다$/,'$1하기')
+     .replace(/([가-힣])된다$/,'$1되기').replace(/기른다$/,'기르기').replace(/가진다$/,'가지기')
+     .replace(/지닌다$/,'지니기').replace(/한다$/,'하기').replace(/쓴다$/,'쓰기')
+     .replace(/읽는다$/,'읽기').replace(/말한다$/,'말하기').replace(/듣는다$/,'듣기')
+     .replace(/[가-힣]다$/, m=>m[0]+'기');
+  return x;
+}
+function shortActivity(t,max){
+  const x=toActivity(t);
+  if(x.length<=(max||34)) return x;
+  const parts=x.split(/(?<=[가-힣])(?:고|며|여|서)[,、]\s*/);
+  if(parts.length>1){
+    const last=parts[parts.length-1];
+    const head=parts[0].replace(/(하고|하며|여|고)$/,'');
+    const s2=head+' → '+last;
+    if(s2.length<=(max||34)+10) return s2;
+    return last.length<=(max||34)? last : last.slice(0,max||34)+'…';
+  }
+  return x.slice(0,max||34)+'…';
+}
+
+/* 교수·학습 내용 초안: 성취기준 + 내용 요소 + 탐구 활동으로 흐름을 세운다 */
+function teachDraft(r){
+  if(r._teach) return r._teach;
+  const ct = contentOf(r) || {};
+  const know = (ct['지식·이해']||[]).filter(usable);
+  const skill= (ct['과정·기능']||[]).filter(usable);
+  const val  = (ct['가치·태도']||[]).filter(usable);
+  const cons = conceptsOf(r,3);
+  const A = cons[0] || r.a;
+  const steps = [];
+  steps.push(['도입', `${areaKeyOf(r)}와(과) 관련된 경험 나누기, 학습 문제 확인하기`
+                .replace('와(과)', jong(areaKeyOf(r))?'과':'와')]);
+  if(know.length) steps.push(['전개 ①', `${know.slice(0,2).join(', ')} 알아보기`]);
+  else steps.push(['전개 ①', `${A}의 뜻과 특징 알아보기`]);
+  
+  if(r.q && r.q.length) steps.push(['전개 ②', r.q[0]]);
+  else if(skill.length) steps.push(['전개 ②', skill[0]]);
+  else steps.push(['전개 ②', toActivity(r.t)]);
+  if(r.q && r.q.length>1) steps.push(['전개 ③', r.q[1]]);
+  else if(skill.length>1) steps.push(['전개 ③', skill[1]]);
+  else steps.push(['전개 ③', '살펴본 내용을 모둠에서 나누고 정리하기']);
+  steps.push(['정리', val.length ? `${J(val[0],'을','를')} 되짚고 생활 속 실천 다짐하기`
+                                 : '배운 내용을 정리하고 생활에 적용할 점 찾기']);
+  const summary = shortActivity(r.t, 34);
+  return r._teach = {steps, summary};
+}
+
+/* 평가 방법 추천 — 범주 성향과 서술어를 근거로 (원문 예시가 있으면 그쪽이 우선) */
+const EVALWAY = {
+  '지식·이해': [
+    ['지필평가(선택형·단답형)', '개념·용어·사실의 이해 여부를 확인할 때'],
+    ['지필평가(서술형)', '까닭을 들어 설명하게 할 때'],
+    ['구술·질의응답', '저학년이거나 글쓰기 부담을 줄여야 할 때'],
+  ],
+  '과정·기능': [
+    ['수행평가(관찰)', '수행 과정을 그때그때 확인해야 할 때'],
+    ['수행평가(실험·실습·실기)', '직접 해 보는 활동이 핵심일 때'],
+    ['수행평가(프로젝트·산출물)', '조사·제작·발표로 이어지는 활동일 때'],
+    ['서·논술형', '탐구 과정과 근거를 글로 드러내게 할 때'],
+  ],
+  '가치·태도': [
+    ['관찰평가(체크리스트)', '수업 중 참여와 태도를 누가 기록할 때'],
+    ['자기평가·동료평가', '스스로 돌아보고 서로 격려하게 할 때'],
+    ['포트폴리오', '한 학기에 걸친 변화를 모아 볼 때'],
+  ],
+};
+function evalDraft(r){
+  if(r._eval) return r._eval;
+  const p = catProfile(r), order = CATS.map((c,i)=>[c,p[i]]).sort((a,b)=>b[1]-a[1]);
+  const ways = [];
+  order.forEach(([c,w],i)=>{ (EVALWAY[c]||[]).slice(0, i===0?2:1).forEach(([m,why])=>ways.push({m,why,cat:c})); });
+  const ct = contentOf(r) || {};
+  const el = [...((ct['과정·기능']||[]).filter(usable).slice(0,2)),
+              ...((ct['지식·이해']||[]).filter(usable).slice(0,1))];
+  const own = toActivity(r.t);
+  if(!el.some(x=>own.includes(x))) el.unshift(own);
+  const samples = (window.__EVAL && window.__EVAL[r.c]) || [];
+  return r._eval = {ways, elements: el, mainCat: order[0][0], samples,
+    area: areaKeyOf(r), count: order[0][0]==='가치·태도' ? '1회(지속 관찰)' : '1~2회'};
+}
+
+/* ============================================================
    화면 구성
    ============================================================ */
 const S={q:'',bands:new Set(),subjs:new Set(),areas:new Set(),sel:null,tab:'std',
@@ -589,10 +681,11 @@ function currentAreas(){
   STD.forEach(r=>{
     if(S.bands.size&&!S.bands.has(r.b)) return;
     if(S.subjs.size&&!S.subjs.has(r.s)) return;
-    if(!seen.has(r.ak)) seen.set(r.ak,{v:r.ak,label:r.a,n:0,bands:new Set(),sr:r.sr,s:r.s,dom:r.dom});
-    seen.get(r.ak).n++;
+    const k=r.subj+'|'+areaKeyOf(r);
+    if(!seen.has(k)) seen.set(k,{v:k,label:areaKeyOf(r),n:0,bands:new Set(),sr:r.sr,s:r.s,units:new Set()});
+    const e=seen.get(k); e.n++; e.units.add(r.a);
   });
-  seen.forEach(e=>STD.forEach(r=>{ if(r.s===e.s&&r.ak===e.v) e.bands.add(r.b); }));
+  seen.forEach(e=>STD.forEach(r=>{ if(r.subj+'|'+areaKeyOf(r)===e.v) e.bands.add(r.b); }));
   return [...seen.values()];
 }
 function renderFilters(){
@@ -610,7 +703,7 @@ function renderAreaChips(){
   chipsInto(host,list.map(a=>({v:a.v,label:a.label,
     hi:a.sr?[...a.bands].sort().map(b=>shortBand(BANDS[b]).replace('학년군','')).join('·'):String(a.n)})),
     S.areas,render);
-  if(list.some(a=>a.sr)) host.appendChild(el('span','fnote','· 1~2·3~4·5~6 표시는 학년군에 걸쳐 이어지는 영역'));
+  host.appendChild(el('span','fnote','· 교육과정 내용 체계의 영역입니다. 숫자가 1~2·3~4·5~6이면 학년군에 걸쳐 이어집니다.'));
 }
 
 /* ---------- 목록 ---------- */
@@ -636,11 +729,13 @@ function render(){
   let lastKey=null;
   rows.slice(0,700).forEach(r=>{
     if(grouped){
-      const key=r.b+'|'+r.s+'|'+r.ak;
+      const ak=areaKeyOf(r), key=r.b+'|'+r.s+'|'+ak+'|'+r.a;
       if(key!==lastKey){ lastKey=key;
         const g=el('div','grouphead');
-        g.appendChild(document.createTextNode(`${shortBand(r.band)} · ${r.subj} · ${r.a}`));
-        const n=rows.filter(x=>x.b===r.b&&x.s===r.s&&x.ak===r.ak).length;
+        const label=(ak===r.a)? `${shortBand(r.band)} · ${r.subj} · ${ak}`
+                              : `${shortBand(r.band)} · ${r.subj} · ${ak} — ${r.a}`;
+        g.appendChild(document.createTextNode(label));
+        const n=rows.filter(x=>x.b===r.b&&x.s===r.s&&areaKeyOf(x)===ak&&x.a===r.a).length;
         g.appendChild(el('span','n',r.sr?`${n}개 · 학년군 연계`:`${n}개`));
         frag.appendChild(g);
       }
@@ -691,9 +786,9 @@ function renderDetail(){
   head.appendChild(el('div','dcode',r.c));
   const tags=el('div','dtags');
   [r.band,r.subj].forEach(t=>tags.appendChild(el('span','tag',t)));
-  tags.appendChild(el('span','tag solid',r.a));
   const dn=domName(r);
-  if(dn&&dn!==r.a) tags.appendChild(el('span','tag',`내용 체계 영역: ${dn}${(r.domGuess&&!DOMPICK[r.c])?' (자동 연결)':''}`));
+  tags.appendChild(el('span','tag solid', dn||r.a));
+  if(dn&&dn!==r.a) tags.appendChild(el('span','tag',`단원: ${r.a}${(r.domGuess&&!DOMPICK[r.c])?' · 영역 자동 연결':''}`));
   if(r.sr) tags.appendChild(el('span','tag','학년군 위계'));
   head.appendChild(tags);
   const dt=el('div','dtext'); dt.appendChild(hl(r.t,terms)); head.appendChild(dt);
@@ -707,14 +802,14 @@ function renderDetail(){
   head.appendChild(act); d.appendChild(head);
 
   const tabs=el('div','tabs');
-  [['std','성취기준·성취수준'],['cs','내용 체계'],['plan','수업 설계 (개념 기반 탐구)'],
-   ['rel','연관·위계'],['map','개념 지도']].forEach(([k,label])=>{
+  [['std','성취기준·성취수준'],['cs','내용 체계'],['lesson','수업·평가 계획'],
+   ['plan','개념 기반 탐구'],['rel','연관·위계'],['map','개념 지도']].forEach(([k,label])=>{
     const b=el('button','tab'+(S.tab===k?' on':''),label);
     b.onclick=()=>{ S.tab=k; renderDetail(); }; tabs.appendChild(b);
   });
   d.appendChild(tabs);
   const pane=el('div','pane');
-  ({std:paneStd,cs:paneCs,plan:panePlan,rel:paneRel,map:paneMap}[S.tab])(pane,r,terms);
+  ({std:paneStd,cs:paneCs,lesson:paneLesson,plan:panePlan,rel:paneRel,map:paneMap}[S.tab]||paneStd)(pane,r,terms);
   d.appendChild(pane);
 }
 
@@ -756,7 +851,8 @@ function domPicker(pane,r){
   if(!r.domCand&&!r.domGuess) return;
   const doms=(DOM[r.subj]||[]).map(d=>d.name);
   const box=el('div','card plain');
-  box.appendChild(el('div','catname','내용 체계 영역 — 자동으로 이어 붙인 값입니다. 다르면 바꿔 주세요.'));
+  box.appendChild(el('div','catname',
+    '내용 체계 영역 — 교육과정에 단원↔영역 대응표가 없어 자동으로 이어 붙였습니다. 반드시 확인하고 다르면 바꿔 주세요.'));
   const sel=el('select'); sel.style.cssText='margin-top:5px;padding:5px 8px;border:1px solid var(--line2);border-radius:6px;background:var(--bg);max-width:100%';
   (r.domCand||doms).concat(doms.filter(d=>!(r.domCand||[]).includes(d))).forEach((d,i,arr)=>{
     if(arr.indexOf(d)!==i) return;
@@ -850,10 +946,11 @@ function panePlan(pane,r,terms){
     pane.appendChild(ul);
   }
   const sm=SMETA[r.subj];
-  if(sm&&(sm.comp.length||sm.compText.length)){
+  if(sm){
     pane.appendChild(secTitle(`${r.subj}과 역량`,'교육과정 원문'));
     if(sm.comp.length){ const cw2=el('div'); sm.comp.forEach(c=>cw2.appendChild(el('span','pill',c))); pane.appendChild(cw2); }
-    sm.compText.forEach(t=>{ const c=el('div','card'); c.textContent=t; pane.appendChild(c); });
+    else pane.appendChild(el('div','hint',`${r.subj}과 교육과정에는 교과 역량 목록이 따로 제시되어 있지 않습니다. 아래 설명 문단을 참고하세요.`));
+    (sm.compText||[]).forEach(t=>{ const c=el('div','card'); c.textContent=t; pane.appendChild(c); });
   }
 }
 
@@ -901,6 +998,101 @@ function paneRel(pane,r){
   const sims=similar(r,S.relMode,S.relCat);
   if(!sims.length) pane.appendChild(el('div','empty','조건에 맞는 연관 성취기준을 찾지 못했습니다. 범위를 넓혀 보세요.'));
   sims.forEach(({o,s})=>pane.appendChild(relCard(o,s,commonKw(r,o))));
+}
+
+/* 탭 — 수업·평가 계획 */
+function paneLesson(pane,r,terms){
+  domPicker(pane,r);
+  const td=teachDraft(r), ed=evalDraft(r);
+  const w=el('div','warn');
+  w.innerHTML='<b>아래 교수·학습 내용과 평가 방법은 인공지능이 만든 초안입니다.</b> 성취기준·성취수준·내용 요소를 바탕으로 자동 구성한 것이므로 반드시 검토하고 학급·학교 실정에 맞게 고쳐 사용해 주세요. 「성취수준 A·B·C」와 「예시 평가 도구」는 원문 그대로입니다.';
+  pane.appendChild(w);
+
+  /* 교수·학습 내용 */
+  pane.appendChild(secTitle('교수·학습 내용 (단원명 칸에 쓸 요약)','AI 초안'));
+  const sum=el('div','card'); sum.style.fontWeight='600';
+  sum.appendChild(document.createTextNode(td.summary));
+  pane.appendChild(sum);
+  pane.appendChild(secTitle('차시 흐름','AI 초안'));
+  const tw=el('div','card plain');
+  const ul=el('ul','tight');
+  td.steps.forEach(([k,x])=>{ const li=el('li');
+    const b=el('b',null,k+' '); li.appendChild(b); li.appendChild(document.createTextNode(x)); ul.appendChild(li); });
+  tw.appendChild(ul); pane.appendChild(tw);
+  if(r.q&&r.q.length){
+    pane.appendChild(secTitle('교육과정에 제시된 탐구 활동','교육과정 원문'));
+    const u2=el('ul','tight'); r.q.forEach(x=>{ const li=el('li'); li.appendChild(hl(x,terms)); u2.appendChild(li); });
+    pane.appendChild(u2);
+  }
+
+  /* 평가 계획 */
+  pane.appendChild(secTitle('평가 영역 · 요소','AI 초안 + 원문'));
+  const g=el('div','grid3');
+  const c1=el('div','card plain'); c1.appendChild(el('div','catname','평가 영역'));
+  c1.appendChild(el('div',null,ed.area)).style.fontWeight='700';
+  c1.appendChild(el('div',null,`중심 범주: ${ed.mainCat}`)).style.cssText='font-size:12px;color:var(--dim);margin-top:3px';
+  const c2=el('div','card plain'); c2.appendChild(el('div','catname','평가 요소'));
+  const u3=el('ul','tight'); ed.elements.forEach(x=>u3.appendChild(el('li',null,x))); c2.appendChild(u3);
+  const c3=el('div','card plain'); c3.appendChild(el('div','catname','평가 횟수(권장)'));
+  c3.appendChild(el('div',null,ed.count)).style.fontWeight='700';
+  c3.appendChild(el('div',null,'학교 평가 계획에 맞추어 조정')).style.cssText='font-size:12px;color:var(--dim);margin-top:3px';
+  g.appendChild(c1); g.appendChild(c2); g.appendChild(c3);
+  pane.appendChild(g);
+
+  pane.appendChild(secTitle('평가 방법 제안','AI 초안'));
+  ed.ways.forEach(({m,why,cat})=>{
+    const c=el('div','card plain');
+    const h=el('div'); h.appendChild(el('span','pill solid',m)); h.appendChild(el('span','pill',cat));
+    c.appendChild(h);
+    c.appendChild(el('div',null,why)).style.cssText='font-size:13px;color:var(--dim);margin-top:4px';
+    pane.appendChild(c);
+  });
+
+  pane.appendChild(secTitle('평가 기준 (성취수준 그대로)','성취수준 원문'));
+  ['A','B','C'].forEach(L=>{
+    const row=el('div','lv lv-'+L); row.appendChild(el('div','lvb',L));
+    const t=el('div','lvt'); t.appendChild(hl(r[L],terms)); row.appendChild(t); pane.appendChild(row);
+  });
+
+  if(ed.samples.length){
+    pane.appendChild(secTitle('예시 평가 도구','성취수준 원문'));
+    ed.samples.forEach(s=>{
+      const c=el('div','card');
+      const h=el('div');
+      if(s.tool) h.appendChild(el('span','pill solid',s.tool));
+      if(s.score) h.appendChild(el('span','pill','배점 '+s.score));
+      (s.comp||[]).forEach(x=>h.appendChild(el('span','pill',x+' 역량')));
+      c.appendChild(h);
+      if(s.theme) c.appendChild(el('div',null,'주제: '+s.theme)).style.cssText='font-size:12.5px;margin-top:4px';
+      if((s.elements||[]).length){
+        c.appendChild(el('div','catname','평가 요소'));
+        const u=el('ul','tight'); s.elements.forEach(x=>u.appendChild(el('li',null,x))); c.appendChild(u);
+      }
+      (s.note||[]).forEach(x=>{ const p=el('div',null,x);
+        p.style.cssText='font-size:12.5px;color:var(--dim);margin-top:5px'; c.appendChild(p); });
+      pane.appendChild(c);
+    });
+  } else {
+    pane.appendChild(el('div','hint',
+      '이 성취기준에는 교육과정 자료의 예시 평가 도구가 따로 없습니다. 위 평가 방법 제안과 성취수준을 근거로 문항을 만드시고, 더 많은 예시는 국가 학생평가 지원포털에서 확인하실 수 있습니다.'));
+  }
+  const src=el('div','card plain');
+  src.appendChild(el('div','catname','평가 자료를 더 찾으려면'));
+  const a=el('a',null,'국가 학생평가 지원포털 (stas.moe.go.kr)');
+  a.href='https://stas.moe.go.kr/cmn/main'; a.target='_blank'; a.rel='noopener';
+  src.appendChild(a);
+  src.appendChild(el('div',null,'교과별 수행평가 도구, 서·논술형 평가 도구, 채점 기준 예시를 제공합니다. 자료를 내려받으려면 회원 가입·로그인이 필요합니다.'))
+     .style.cssText='font-size:12.5px;color:var(--dim);margin-top:4px';
+  pane.appendChild(src);
+
+  const bar=el('div','dact');
+  const b1=el('button','btn on','평가계획 한 줄 복사');
+  b1.onclick=()=>copy([r.c, ed.area, td.summary, ed.elements.join(' / '),
+    ed.ways.map(x=>x.m).slice(0,2).join(', '), ed.count].join('\t'), b1);
+  const b2=el('button','btn','이 성취기준 MD');
+  b2.onclick=()=>download(`${r.c.replace(/[\[\]]/g,'')}.md`, mdOf([r]), 'text/markdown');
+  bar.appendChild(b1); bar.appendChild(b2);
+  pane.appendChild(bar);
 }
 
 /* ============================================================
@@ -1150,6 +1342,25 @@ function mdOf(rows){
         L.push(`- **${x}**`);
         for(const [cat,txt] of Object.entries(a.L[x])) L.push(`  - ${cat}: ${txt}`); });
       L.push(''); }
+    const td=teachDraft(r), ed=evalDraft(r);
+    L.push(`### 교수·학습 내용 초안 — AI 생성, 검토 필요`);
+    L.push(`- 요약(단원명 칸): ${td.summary}`);
+    td.steps.forEach(([k,x])=>L.push(`- **${k}** ${x}`));
+    L.push('');
+    L.push(`### 평가 계획 초안 — AI 생성, 검토 필요`);
+    L.push(`- 평가 영역: ${ed.area} (중심 범주 ${ed.mainCat})`);
+    L.push(`- 평가 요소: ${ed.elements.join(' / ')}`);
+    L.push(`- 평가 방법: ${ed.ways.map(x=>x.m).join(', ')}`);
+    L.push(`- 평가 횟수(권장): ${ed.count}`);
+    L.push(`- 평가 기준: 위 성취수준 A·B·C 참고`);
+    if(ed.samples.length){
+      L.push(`- 예시 평가 도구(원문):`);
+      ed.samples.forEach(s2=>{
+        L.push(`  - ${s2.tool||''}${s2.score?' / 배점 '+s2.score:''}${s2.theme?' / 주제: '+s2.theme:''}`);
+        (s2.elements||[]).forEach(x=>L.push(`    - 평가 요소: ${x}`));
+      });
+    }
+    L.push('');
     L.push(`### 개념 기반 탐구 초안 — AI 생성, 검토 필요`);
     L.push(`- 개념적 렌즈: **${k.lens}**`);
     L.push(`- 핵심 개념: ${k.concepts.join(', ')}`);
@@ -1170,8 +1381,17 @@ function mdOf(rows){
   L.push('이 성취기준들을 묶어 초등학교 ○학년 ○차시 프로젝트 수업을 설계해 주세요.');
   L.push('개념 기반 탐구 초안은 참고만 하고, 일반화 문장과 탐구 질문은 다시 다듬어 주세요.');
   L.push('평가 계획은 A·B·C 성취수준을 근거로 만들어 주세요.');
+  L.push('교수·학습 내용과 평가 방법 초안은 참고만 하고, 차시 수와 학급 상황에 맞게 다시 짜 주세요.');
   L.push('```');
   return L.join('\n');
+}
+function planCSV(rows){
+  const head=['시기','학년군','교과','성취기준코드','성취기준','평가 영역','단원명(교수·학습 내용)',
+    '평가 요소','평가 방법','평가 횟수','성취수준 A','성취수준 B','성취수준 C'];
+  const body=rows.map(r=>{ const td=teachDraft(r), ed=evalDraft(r);
+    return ['', r.band, r.subj, r.c, r.t, ed.area, td.summary, ed.elements.join(' / '),
+      ed.ways.map(x=>x.m).slice(0,2).join(', '), ed.count, r.A, r.B, r.C].map(csvEsc).join(','); });
+  return '﻿'+[head.join(','),...body].join('\r\n');
 }
 const csvEsc=v=>{ v=(v==null?'':String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
 function toCSV(rows){
@@ -1207,6 +1427,7 @@ function bindEvents(){
   $('#btnAll').onclick=()=>{ filtered().forEach(r=>S.cart.add(r.c)); saveCart(); render(); };
   $('#btnSort').onclick=()=>{ S.sort=S.sort==='rel'?'code':'rel'; render(); };
   $('#cartCsv').onclick=()=>download(`수업바구니_${S.cart.size}건.csv`,toCSV(cartRows()));
+  $('#cartPlan').onclick=()=>download(`평가계획_${S.cart.size}건.csv`,planCSV(cartRows()));
   $('#cartMd').onclick=()=>download(`수업설계자료_${S.cart.size}건.md`,mdOf(cartRows()),'text/markdown');
   $('#cartClear').onclick=()=>{ if(confirm('담은 성취기준을 모두 비울까요?')){ S.cart.clear(); saveCart(); render(); } };
   $('#cartCopy').onclick=()=>copy(['성취기준코드\t학년군\t교과\t영역\t성취기준',
@@ -1303,7 +1524,7 @@ function openGuide(){
         });
         const btn=el('button','btn sm','이 영역 성취기준 보기');
         btn.onclick=()=>{ S.subjs.clear(); S.subjs.add(SUBJ.indexOf(s)); S.areas.clear();
-          STD.filter(r=>r.subj===s&&r.dom===d.name).forEach(r=>S.areas.add(r.ak));
+          S.areas.add(s+'|'+d.name);
           $('#dlg').close(); renderFilters(); render(); };
         det.appendChild(btn);
         body.appendChild(det);
@@ -1321,8 +1542,9 @@ function openHelp(){
   <ul>
     <li>성취기준과 <b>성취기준 해설</b>, A·B·C <b>성취수준</b>을 한자리에서 봅니다.</li>
     <li>교육과정 <b>내용 체계</b>(영역·핵심 아이디어·범주별 내용 요소)를 성취기준과 함께 봅니다.</li>
+    <li><b>수업·평가 계획</b> 탭에서 교수·학습 내용(단원명 칸)과 평가 영역·요소·방법·횟수 초안을 받습니다.</li>
     <li><b>개념 기반 탐구</b> 초안(개념적 렌즈·일반화·탐구 질문)을 받아 수업 설계의 출발점으로 씁니다.</li>
-    <li>여러 성취기준을 담아 <b>MD 파일</b>로 내려받아 인공지능과 이어서 수업을 설계합니다.</li>
+    <li>여러 성취기준을 담아 <b>MD 파일</b>·<b>평가계획 CSV</b>로 내려받아 그대로 활용합니다.</li>
   </ul>
   <h4>검색</h4>
   <ul>
@@ -1339,6 +1561,16 @@ function openHelp(){
     <li><b>사회·과학</b>은 성취기준이 <b>단원</b> 단위로 제시되어 내용 체계의 영역과 다릅니다.
         이 경우 내용 요소를 견주어 자동으로 이어 붙였고, 화면에 <i>자동 연결</i>이라고 표시합니다.</li>
     <li>영역 칩의 <code>1~2·3~4·5~6</code> 표시는 그 영역이 학년군에 걸쳐 이어진다는 뜻입니다.</li>
+  </ul>
+  <h4>수업·평가 계획</h4>
+  <ul>
+    <li><b>교수·학습 내용</b>은 성취기준·내용 요소·탐구 활동으로 차시 흐름을 짜 초안을 만듭니다.
+        평가계획의 <i>단원명(교수·학습 내용)</i> 칸에 쓸 한 줄 요약도 함께 줍니다.</li>
+    <li><b>평가 방법</b>은 그 성취기준의 범주 성향(지식·이해 / 과정·기능 / 가치·태도)에 맞추어 제안합니다.</li>
+    <li><b>평가 기준</b>은 성취수준 A·B·C 원문을 그대로 씁니다.</li>
+    <li>교육과정 자료에 <b>예시 평가 도구</b>가 있는 성취기준은 평가 요소·도구 유형·배점을 원문 그대로 보여 줍니다.</li>
+    <li>더 많은 평가 도구는 <b>국가 학생평가 지원포털(stas.moe.go.kr)</b>에서 받을 수 있습니다. 내려받기에는 로그인이 필요합니다.</li>
+    <li><b>평가계획 CSV</b>를 내려받으면 시기·성취기준·단원명·평가 영역·요소·방법·횟수·성취수준 칸이 채워진 표를 엑셀에서 바로 열 수 있습니다.</li>
   </ul>
   <h4>개념 기반 탐구 초안</h4>
   <ul>
@@ -1371,6 +1603,7 @@ function boot(data){
   BANDS=data.bands; SUBJ=data.subjects; STD=data.std; AREA=data.area;
   DOM=data.dom; GUIDE=data.guide; SMETA=data.subjMeta;
   window.__SRC=data.meta.src||[];
+  window.__EVAL=data.eval||{};
   buildIndex(); buildSeries(); buildConceptIndex();
   $('#srcline').innerHTML=(data.meta.src||[]).join('<br>')+
     `<br>성취기준 ${data.meta.nStd}개 · 성취기준 해설 ${data.meta.nHae}개 · 영역별 성취수준 ${data.meta.nArea}개`;

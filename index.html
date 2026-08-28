@@ -516,8 +516,8 @@ function cbi(r){
   const know=knowAll.filter(x=>relatedTo(x,own));
   const skill=skillAll.filter(x=>relatedTo(x,own));
   const val=valAll.filter(x=>relatedTo(x,own));
-  const act=shortActivity(r.t, 40);
-  const actQ=act.includes(' → ') ? act.split(' → ').pop() : act;
+  const act=lessonTitle(r);
+  const actQ=act;
   // 문장에는 단원명을 쓴다. 자동 연결된 영역보다 성취기준에 가깝다.
   let area=r.a || areaKeyOf(r);
   if(/[?？]$|까$/.test(area)) area='이 단원';
@@ -653,29 +653,58 @@ function hl(text,terms){
 /* 성취기준이 속한 '영역' — 내용 체계 영역을 우선한다 (사용자가 고른 값 포함) */
 const areaKeyOf = r => domName(r) || r.a;
 
-/* 성취기준 문장을 '~하기' 꼴 활동 이름으로 다듬는다 */
+/* ---------- 성취기준을 '~하기' 꼴 활동 이름으로 다듬기 ----------
+   정보공시 '교수·학습 내용' 칸에 그대로 쓰는 값이라 자르지 않고 한 문구로 만든다. */
+function stripJong(ch){                      // '할' -> '하'
+  const c=ch.charCodeAt(0);
+  if(c<0xAC00||c>0xD7A3) return ch;
+  const j=(c-0xAC00)%28;
+  return j? String.fromCharCode(c-j) : ch;
+}
+/* 어간이 본디 'ㄹ'로 끝나는 풀이씨 — 받침을 지우면 안 된다 */
+const LKEEP=/(만들|들|알|살|열|팔|놀|걸|물|밀|길|빌|풀|줄|늘|썰|졸|불)$/;
 function toActivity(t){
-  let x=(t||'').replace(/\s*$/,'').replace(/\.$/,'');
-  x=x.replace(/할\s*수\s*있다$/,'하기').replace(/어\s*본다$/,'어 보기').replace(/아\s*본다$/,'아 보기')
-     .replace(/해\s*본다$/,'해 보기').replace(/본다$/,'보기').replace(/([가-힣])한다$/,'$1하기')
-     .replace(/([가-힣])된다$/,'$1되기').replace(/기른다$/,'기르기').replace(/가진다$/,'가지기')
-     .replace(/지닌다$/,'지니기').replace(/한다$/,'하기').replace(/쓴다$/,'쓰기')
-     .replace(/읽는다$/,'읽기').replace(/말한다$/,'말하기').replace(/듣는다$/,'듣기')
-     .replace(/[가-힣]다$/, m=>m[0]+'기');
+  let x=(t||'').trim().replace(/[.\s]+$/,'');
+  // ① '~ㄹ/을 수 있다'
+  let m=x.match(/^(.*?)([가-힣])\s*수\s*있다$/);
+  if(m){
+    let head=m[1], last=m[2];
+    if(/을$/.test(last)) return head.replace(/\s+$/,'')+'기';          // 찾을 수 있다 -> 찾기
+    const stem=(head+last).replace(/\s+$/,'');
+    if(LKEEP.test(stem)) return stem+'기';                             // 만들 수 있다 -> 만들기
+    return head+stripJong(last)+'기';                                  // 할/볼/쓸 -> 하기/보기/쓰기
+  }
+  // ② '~는다' / '~ㄴ다'
+  if(/는다$/.test(x)) return x.replace(/는다$/,'')+'기';               // 읽는다 -> 읽기
+  m=x.match(/^(.*?)([가-힣])다$/);
+  if(m){
+    const last=m[2], c=last.charCodeAt(0), j=(c>=0xAC00&&c<=0xD7A3)?((c-0xAC00)%28):0;
+    if(j===4){                                                          // 종성 'ㄴ'
+      const stem=m[1]+stripJong(last);
+      if(/보$/.test(stem)) return stem+'기';                            // 본다 -> 보기
+      return stem+'기';                                                 // 한다/기른다/가진다 -> 하기/기르기/가지기
+    }
+    if(/[았었]$/.test(last)) return x;
+  }
+  // ③ 그밖에 '~다'로 끝나면 '기'로
+  if(/다$/.test(x)) return x.replace(/다$/,'')+'기';
   return x;
 }
-function shortActivity(t,max){
-  const x=toActivity(t);
-  if(x.length<=(max||34)) return x;
-  const parts=x.split(/(?<=[가-힣])(?:고|며|여|서)[,、]\s*/);
-  if(parts.length>1){
-    const last=parts[parts.length-1];
-    const head=parts[0].replace(/(하고|하며|여|고)$/,'');
-    const s2=head+' → '+last;
-    if(s2.length<=(max||34)+10) return s2;
-    return last.length<=(max||34)? last : last.slice(0,max||34)+'…';
+/* 정보공시 칸 문구 — 자르지 않고, 길면 앞쪽 조건·도구 수식만 덜어 낸다 */
+const TRIM=[
+  /^[^,]{2,26}?(?:을|를)\s*(?:통해|통하여|활용하여|이용하여|바탕으로|중심으로)\s+/,
+  /^[^,]{2,26}?(?:와|과)\s*(?:연결하여|관련지어|비교하여)\s+/,
+  /^[^,]{2,22}?(?:으로|로)\s+/,
+  /^[^,]{2,22}?에서\s+/,
+];
+function lessonTitle(r){
+  let x=toActivity(r.t);
+  for(const re of TRIM){
+    if(x.length<=46) break;
+    const y=x.replace(re,'');
+    if(y.length>=12 && y!==x) x=y;
   }
-  return x.slice(0,max||34)+'…';
+  return x;
 }
 
 /* 성취기준을 이어지는 활동으로 갈라 교수·학습 내용을 만든다 (정보공시 서술용) */
@@ -730,7 +759,7 @@ function teachDraft(r){
   steps.push(['정리', val.length ? `${J(val[0],'을','를')} 되짚고 생활 속 실천 다짐하기`
                                  : '배운 내용을 정리하고 생활에 적용할 점 찾기']);
   const acts = lessonActs(r);
-  const summary = acts.join(' → ');
+  const summary = lessonTitle(r);   // 정보공시 칸: 화살표·줄임표 없이 한 문구
   return r._teach = {steps, summary};
 }
 
@@ -1124,12 +1153,12 @@ function paneLesson(pane,r,terms){
   spot.appendChild(el('span','lbl','정보공시 평가 · 단원명(교수·학습 내용) 칸'));
   spot.appendChild(el('div','big', td.summary));
   const sb=el('div','sub');
-  sb.textContent='성취기준을 활동 단위로 풀어 쓴 초안입니다. 학급 상황에 맞게 다듬어 쓰세요.';
+  sb.textContent='성취기준을 그대로 살려 한 문구로 다듬은 초안입니다. 줄이거나 나누지 않았으니 학급 상황에 맞게 손보세요.';
   spot.appendChild(sb);
   const sbtn=el('div','dact');
   const bCopySum=el('button','btn on','이 문장 복사');
   bCopySum.onclick=()=>copy(td.summary, bCopySum);
-  const bActs=el('button','btn','활동별로 나눠 복사');
+  const bActs=el('button','btn','차시용 활동으로 나눠 복사');
   bActs.onclick=()=>copy(lessonActs(r).map((x,i)=>`${i+1}. ${x}`).join('\n'), bActs);
   sbtn.appendChild(bCopySum); sbtn.appendChild(bActs);
   spot.appendChild(sbtn);

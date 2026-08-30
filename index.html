@@ -498,6 +498,7 @@ function topicOf(r){
   // 앞에 붙은 조건·도구 구절을 덜어 낸다
   head=head.replace(/^.*?(?:으로써|으로서|로써|로서|을 통해|를 통해|을 통하여|를 통하여|에서)\s+/, '');
   head=head.replace(/^.*?(?:으로|로)\s+/, '');
+  head=head.replace(/^(인해|말미암아|하여|해서|인하여)\s+/, '');
   head=head.replace(MODI, '').trim();
   // '~의 원인/특징/방법' 같은 꼬리를 덜어 대상만 남긴다
   let x=trimTail(head) || head;
@@ -848,6 +849,97 @@ function pickPair(cons, L, fallback){
   }
   return [A, B];
 }
+
+/* ---------- 일반화 문장 만들기 ----------
+   틀에 개념만 갈아 끼우면 611개가 스무 가지 문장으로 찍혀 나온다.
+   교육과정 원문에 이미 알맹이가 있으니 그것을 먼저 쓴다. */
+
+/* 한글 종성 붙이기 ('생기' + ㄴ -> '생긴') */
+function addJong(ch, j){
+  const c=ch.charCodeAt(0);
+  if(c<0xAC00||c>0xD7A3) return ch;
+  if((c-0xAC00)%28!==0) return ch;
+  return String.fromCharCode(c+j);
+}
+/* '~생김을 이해하게 한다' -> '~생긴다' 처럼 이름꼴을 풀이꼴로 되돌린다 */
+function toStatement(t){
+  let x=(t||'').replace(/\s+/g,' ').trim().replace(/[.]+$/,'');
+  // 뒤에 붙은 지도 지시를 걷어 낸다
+  x=x.replace(/([가-힣])ㅁ?을\s*(이해하게|알게|알도록|이해하도록|깨닫게|인식하게)\s*한다$/, '$1');
+  x=x.replace(/\s*(음|임|함|됨|김|남|짐)을\s*(이해하게|알게|알도록|이해하도록|깨닫게|인식하게|파악하게)\s*한다$/, '\u0001$1');
+  const m=x.match(/^(.*)\u0001(음|임|함|됨|김|남|짐)$/);
+  if(m){
+    const head=m[1], kind=m[2];
+    if(kind==='임') return head+'이다';
+    if(kind==='음') return head+'다';
+    // 함/됨/김/남/짐 -> 하 /되 /기 /나 /지 + ㄴ다
+    const stem={'함':'하','됨':'되','김':'기','남':'나','짐':'지'}[kind];
+    return head + addJong(stem, 4) + '다';
+  }
+  x=x.replace(/\u0001/g,'');
+  return x;
+}
+/* 지도 방법을 이르는 문장인지 (일반화로 쓸 수 없다) */
+const TEACHY=/(지도|유의|다루지 않|다룬다|다루고|다루며|중심으로|초점을|중점을|주안점|활동에|활동을|제시하|평가하|차시|교사|학생들이|설명하지 않|설정하|설정한|취지는)/;
+/* 명제로 읽히는 문장인지 */
+const CLAIMY=/(때문에|므로|으로써|에 따라|하면|이면|면서|관계가|영향을|까닭|원인|덕분에|덕에|나타난다|달라진다|이루어진다|생긴다|필요하다)/;
+
+/* 해설에서 일반화로 쓸 만한 문장을 고른다 */
+function genFromHae(r){
+  if(!r.hae) return null;
+  let t=r.hae.replace(/^\[[^\]]+\]\s*/,'');
+  const sents=t.split(/(?<=[.])\s+/).map(x=>x.trim()).filter(Boolean);
+  let best=null, bs=0;
+  sents.forEach(st=>{
+    if(st.length<18 || st.length>120) return;
+    if(TEACHY.test(st)) return;
+    if(/^이 성취기준은/.test(st)) return;
+    if(/^(은|는|이|가|을|를|와|과|도|만|의|에|로|며|고)\s/.test(st)) return;   // 앞이 잘린 조각
+    if(/^[가-힣]{1,2}\s/.test(st) && /^(은|는|이|가|을|를)/.test(st)) return;
+    if(!CLAIMY.test(st)) return;              // 까닭·조건을 말하지 않으면 일반화가 아니다
+    let sc=3;
+    if(/(이해하게 한다|알게 한다|이해하도록 한다|파악하게 한다|아는 데 중점을 둔다)$/.test(st)) sc+=2;
+    if(st.length<=80) sc+=1;
+    if(sc>bs){ bs=sc; best=st; }
+  });
+  if(!best || bs<3) return null;
+  let out=toStatement(best);
+  out=out.replace(/(하는 데 중점을 둔다|에 중점을 둔다|에 초점을 맞춘다|에 주안점을 둔다)$/,'');
+  out=out.replace(/\s*(등을 학습한다|을 학습한다|를 학습한다)$/,'');
+  out=out.replace(/\s*(하도록 한다|하게 한다|할 수 있도록 한다)$/,'한다');
+  out=out.replace(/\s+/g,' ').trim();
+  if(out.length<16) return null;
+  if(!/[다]$/.test(out)) return null;
+  if(TEACHY.test(out)) return null;            // 다듬고 나서도 지도 지침이면 쓰지 않는다
+  if(/(하도록 한다|하게 한다|않는다|않으며|않고)$/.test(out)) return null;
+  return out;
+}
+
+/* 성취기준에서 까닭·수단·조건 구를 뽑는다 */
+function causeOf(r){
+  const t=(r.t||'').replace(/\s+/g,' ');
+  const tidy=x=>{
+    x=(x||'').trim().replace(/^(그|이|저)\s+/,'');
+    x=x.replace(/\s*(것|점|일)$/,'');
+    return x.trim();
+  };
+  let m=t.match(/원인을\s*(.+?)(?:으로|로)\s*설명/);            if(m) return {k:'cause', v:tidy(m[1])};
+  m=t.match(/^(.+?)(?:을|를)\s*알고,?\s*.*(?:생기는|나타나는|일어나는)\s*(?:원인|이유|까닭)/);
+  if(m) return {k:'cause', v:tidy(m[1])};
+
+  m=t.match(/이유를\s*(.+?)(?:으로|로)\s*설명/);                if(m) return {k:'cause', v:tidy(m[1])};
+  m=t.match(/(.+?)(?:으로|로)\s*(?:인해|말미암아)/);             if(m) return {k:'cause', v:tidy(m[1])};
+  m=t.match(/(.+?)에\s*따라\s*(?:달라지|변하|나타나)/);         if(m) return {k:'cond',  v:tidy(m[1])};
+  return null;
+}
+/* '~하는' 꼴을 '~하기' 꼴로 (문장에 넣기 좋게) */
+function asNounPhrase(x){
+  x=(x||'').trim();
+  x=x.replace(/(하는|되는|지는|나는|오는|가는|주는)$/, m=>({'하는':'하기','되는':'되기','지는':'지기',
+      '나는':'나기','오는':'오기','가는':'가기','주는':'주기'}[m]));
+  return x;
+}
+
 function cbi(r){
   if(r._cbi) return r._cbi;
   const cons=conceptsOf(r,5);
@@ -862,10 +954,35 @@ function cbi(r){
   if(/[?？]$|까$/.test(area)) area='이 단원';
   const pr=pickPair(cons, L, areaKeyOf(r)), A=pr[0], B=pr[1];
 
-  /* 일반화 — 개념과 개념의 관계를 현재형으로 */
-  const gen=[L.gen[0](A,B), L.gen[1](A,B)];
-  if(val.length) gen.push(J(elemNoun(val[0]),'은','는')
+  /* 일반화 — 원문에 알맹이가 있으면 그것을 먼저 쓴다 */
+  const gen=[], genSrc=[];
+  const fromHae=genFromHae(r);
+  if(fromHae){ gen.push(fromHae); genSrc.push('해설'); }
+  const cz=causeOf(r);
+  if(cz && cz.v && cz.v.length>=4 && cz.v.length<=42
+     && cz.v.replace(/\s/g,'')!==A.replace(/\s/g,'')
+     && !cz.v.replace(/\s/g,'').includes(A.replace(/\s/g,''))){
+    const v=asNounPhrase(cz.v);
+    let line='';
+    if(cz.k==='cause') line=J(A,'은','는')+' '+v+' 때문에 일어난다.';
+    else if(cz.k==='cond') line=J(A,'은','는')+' '+J(v,'에','에')+' 따라 달라진다.';
+    else {
+      const va=v.replace(/\s/g,''), aa=A.replace(/\s/g,'');
+      line=(va===aa||va.includes(aa)||aa.includes(va)) ? ''
+         : J(v,'을','를')+' 살펴보면 '+J(A,'을','를')+' 더 또렷이 알 수 있다.';
+    }
+    if(line && !gen.some(g=>g===line)){ gen.push(line); genSrc.push('성취기준'); }
+  }
+  while(gen.length<2){
+    const cand=L.gen[gen.length===0?0:1](A,B);
+    if(gen.some(g=>g===cand)) break;
+    gen.push(cand); genSrc.push('렌즈');
+  }
+  if(val.length && gen.length<3){
+    gen.push(J(elemNoun(val[0]),'은','는')
       + (area.length<=10 ? ' '+J(area,'을','를')+' 배우는 내내' : ' 이 배움 내내') + ' 길러진다.');
+    genSrc.push('내용 요소');
+  }
 
   /* 탐구 질문 */
   const fact=[J(A,'은','는')+' 무엇인가?'];
@@ -889,7 +1006,7 @@ function cbi(r){
   const hit=(r.t.match(L.re)||[])[0];
   return r._cbi={lens:L.n,
     lensWhy: hit? "성취기준의 '"+hit+"'에 기대어 골랐습니다" : r.subj+'과에서 자주 쓰이는 렌즈입니다',
-    concepts:cons, pair:[A,B], gen, q:{fact:fact, conc:conc, deb:deb},
+    concepts:cons, pair:[A,B], gen, genSrc:genSrc, q:{fact:fact, conc:conc, deb:deb},
     enduring:enduringOf(r), content:ct, activity:act};
 }
 
@@ -1662,10 +1779,19 @@ function panePlan(pane,r,terms){
       }
     }
   }
-  pane.appendChild(secTitle('일반화 문장','AI 초안'));
+  const anyOrig=(k.genSrc||[]).some(x=>x==='해설'||x==='성취기준');
+  pane.appendChild(secTitle('일반화 문장', anyOrig? '교육과정 원문 + AI 초안' : 'AI 초안'));
   pane.appendChild(el('div','lenswhy','개념과 개념의 관계를 현재형으로 진술한 문장입니다. '
     +'학생이 스스로 도달해야 할 결론이므로 수업 앞머리에 알려 주지 않습니다.'));
-  k.gen.forEach(g=>{ const c=el('div','card'); c.textContent=g; pane.appendChild(c); });
+  const SRCLBL={'해설':'성취기준 해설에서 옮김','성취기준':'성취기준을 명제로 바꿈',
+                '렌즈':'AI가 개념적 렌즈에 맞추어 지음','내용 요소':'내용 요소에서 옮김'};
+  k.gen.forEach((g,i)=>{
+    const src=(k.genSrc||[])[i]||'렌즈';
+    const c=el('div', (src==='해설'||src==='성취기준')? 'card hit':'card');
+    c.appendChild(el('div',null,g));
+    c.appendChild(el('div','src', SRCLBL[src]||src));
+    pane.appendChild(c);
+  });
 
   pane.appendChild(secTitle('탐구 질문','AI 초안'));
   const g=el('div','grid3');
@@ -2217,7 +2343,8 @@ function mdOf(rows){
     L.push(`- 일반화의 짝: ${k.pair[0]} ↔ ${k.pair[1]}`);
     if(k.enduring) L.push(`- 영속적 이해(교육과정 핵심 아이디어 발췌): ${k.enduring.text}`);
     L.push(`- 일반화 문장(초안):`);
-    k.gen.forEach(g=>L.push(`  - ${g}`));
+    k.gen.forEach((g,i)=>{ const s2=(k.genSrc||[])[i]||'렌즈';
+      L.push(`  - ${g}  \`${s2==='해설'?'성취기준 해설에서':s2==='성취기준'?'성취기준에서':'AI 초안'}\``); });
     L.push(`- 탐구 질문(초안)`);
     L.push(`  - 사실적: ${k.q.fact.join(' / ')}`);
     L.push(`  - 개념적: ${k.q.conc.join(' / ')}`);

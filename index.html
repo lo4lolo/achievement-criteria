@@ -336,7 +336,7 @@ function cos(a,b){ let d=0; const s=a.size<b.size?a:b, g=s===a?b:a;
 
 const areaOf = r => AREAIDX.get(r.b+'|'+r.s+'|'+r.ak);
 let DOMPICK={};
-let GUIDEPG={};
+let GUIDEPG={}, INQACT={};
 try{ DOMPICK=JSON.parse(localStorage.getItem('dompick2022')||'{}'); }catch(e){}
 const domName = r => DOMPICK[r.c] || r.dom || null;
 const domOf  = r => { const n=domName(r); return n? DOMIDX.get(r.subj+'|'+n) : null; };
@@ -348,6 +348,9 @@ function setDom(r,name){
 const guideKey = r => (GUIDE[r.subj+'|'+r.a] ? r.subj+'|'+r.a
                      : (GUIDE[r.subj+'|'+(r.dom||'')] ? r.subj+'|'+(r.dom||'') : null));
 const guideOf = r => { const k=guideKey(r); return k? GUIDE[k] : null; };
+/* 과학은 단원마다 <탐구 활동>을 따로 제시한다. 고려 사항과 섞으면 안 된다. */
+const inqOf = r => (typeof INQACT!=='undefined'
+  ? (INQACT[r.subj+'|'+r.a] || INQACT[r.subj+'|'+(r.dom||'')] || null) : null);
 /* 고려 사항 가운데 이 성취기준을 바로 풀이하는 대목을 가려낸다.
    그런 대목은 해설과 함께 인용으로 드러내야 선생님이 놓치지 않는다. */
 function guideRows(r){
@@ -471,9 +474,57 @@ function relatedCore(x, own){
   if(cw.length<2) return false;
   return own.replace(/\s/g,'').includes(cw);
 }
+/* 성취기준이 다루는 대상을 뽑는다.
+   목적어('~을/를')를 먼저 보고, 없으면 주어('~은/는/이/가')를 본다.
+   '계절 변화의 원인을 …' -> '계절 변화',  '뼈와 근육의 생김새를 …' -> '뼈와 근육' */
+const MODI=/^(여러 가지|여러|다양한|간단한|기본적인|알맞은|적절한|주변의|일상생활에서|생활 속|우리|하루 동안|자신의|서로 다른)\s+/;
+function topicOf(r){
+  if(r._topic!==undefined) return r._topic;
+  const t=(r.t||'').replace(/\s+/g,' ');
+  let head='';
+  // '낮과 밤이 생기는 이유', '계절 변화의 원인' — 까닭이 걸린 그 대상이 주제다
+  const mc=t.match(/([가-힣][가-힣\s]{1,20}?)(?:이|가|의)?\s*(?:생기는|나타나는|일어나는|달라지는|되는)?\s*(?:원인|이유|까닭)/);
+  if(mc){
+    let h=mc[1].replace(/^.*?(?:을|를|으로|로|에서)\s+/,'').trim();
+    h=h.replace(MODI,'').trim();
+    if(h.length>=2 && h.length<=14 && !NOTCON.test(h)) return r._topic=h;
+  }
+  const m=t.match(/^(.*?)(?:을|를)\s/);
+  if(m) head=m[1];
+  else { const m2=t.match(/^(.*?)(?:은|는|이|가)\s/); if(m2) head=m2[1]; }
+  if(!head) head=t;
+  // 여럿을 늘어놓았으면 첫 번째가 대표다
+  head=head.split(/\s*,\s*/)[0];
+  // 앞에 붙은 조건·도구 구절을 덜어 낸다
+  head=head.replace(/^.*?(?:으로써|으로서|로써|로서|을 통해|를 통해|을 통하여|를 통하여|에서)\s+/, '');
+  head=head.replace(/^.*?(?:으로|로)\s+/, '');
+  head=head.replace(MODI, '').trim();
+  // '~의 원인/특징/방법' 같은 꼬리를 덜어 대상만 남긴다
+  let x=trimTail(head) || head;
+  x=x.replace(/(과|와)\s*같은.*$/, '').trim();
+  // 'A와 B 사이의 …' 는 A가 대표다
+  x=x.replace(/(\s|^)사이$/,'').trim();
+  if(x.length>14){
+    const cut=x.match(/^(.*?)(?:과|와)\s/);          // 여럿을 늘어놓았으면 앞것
+    if(cut && cut[1].trim().length>=2) x=cut[1].trim();
+    if(x.length>14){ const w=x.split(' '); x=w.slice(-2).join(' '); }
+  }
+  x=trimTail(x) || x;
+  // 이름씨가 아니면 개념으로 쓸 수 없다. 조각이면 아예 버리고 내용 요소에 맡긴다.
+  if(/(때|것|수|점|일)$/.test(x) && x.length<=6) x='';
+  if(/(하는|되는|이는|있는|없는|가는|오는|주는|짓는|한|된|운|는)$/.test(x)) x='';
+  if(/(함|됨|짐|림|남|늠)$/.test(x)) x='';
+  if(/(하고|하며|하여|되어|되고|이고|보고|알고|치고|나고)$/.test(x)) x='';
+  if(/(에|에서|으로|로|와|과|의|을|를|이|가|은|는|도|만)$/.test(x)) x='';
+  if(/(되|하)$/.test(x)) x='';
+  if(/(하고|하며|하여|되어|되고)\s[가-힣]$/.test(x)) x='';   // '관찰하고 그' 같은 조각
+  if(/(지|나|오|우|거|려|리|치|피|비)$/.test(x) && x.length<=4) x='';
+  if(x.length<2 || NOTCON.test(x) || ABSTRACT.test(x)) x='';
+  return r._topic=x;
+}
 /* '동물 분류·바다의 특징·도구의 이용'처럼 뒤에 붙은 행위·속성 말을 떼어
    가리키는 대상만 남긴다. 남는 말이 시원치 않으면 그 개념은 버린다. */
-const TAIL=/\s*(의)?\s*(분류|이용|활용|특징|특성|조건|성질|상태|방법|과정|구조|기능|역할|종류|모습|현상)$/;
+const TAIL=/\s*(의)?\s*(분류|이용|활용|특징|특성|조건|성질|상태|방법|과정|구조|기능|역할|종류|모습|현상|원인|이유|까닭|생김새|차이|관계|의미|필요성|중요성|사례|정도|경우|영향)$/;
 function trimTail(x){
   x=(x||'').trim();
   if(!TAIL.test(x)) return x;
@@ -495,10 +546,27 @@ function conceptsOf(r,k){
     const ct=contentOf(r)||{};
     const out=[];
     const push=x=>{ if(!x||x.length<2||NOTCON.test(x)) return;
+      if(/(하고|하며|하여|되어|되$|하$|함$|됨$)/.test(x)) return;
       if(out.some(o=>o===x||o.includes(x)||x.includes(o))) return;
       out.push(x); };
     const own = r.t + ' ' + (r.hae || '');
     const related = x => relatedTo(x, own);
+    // ⓪ 성취기준이 다루는 대상이 으뜸이다.
+    //    내용 요소에 같은 것을 가리키는 말이 있으면 원문 표현을 쓴다.
+    const tp = topicOf(r);
+    if(tp){
+      const flat0 = tp.replace(/\s/g,'');
+      let best = '';
+      (ct['지식·이해']||[]).filter(usable).forEach(x=>{
+        const cc = trimTail(shortConcept(conceptOfElement(x,true)));
+        if(!cc) return;
+        const a = cc.replace(/\s/g,'');
+        if(a===flat0 || flat0.includes(a) || a.includes(flat0)){
+          if(!best || Math.abs(cc.length-tp.length) < Math.abs(best.length-tp.length)) best=cc;
+        }
+      });
+      push(best || tp);
+    }
     // ① 내용 요소는 교육과정이 쓴 낱말 그대로라 가장 믿을 만하다.
     //    하위 범주로 좁혀 두었으므로 이 성취기준과 맞물리는 것만 남는다.
     const flat=own.replace(/\s/g,'');
@@ -605,7 +673,7 @@ const LENSES=[
        (a,b)=>J(a,'과','와')+' '+J(b,'은','는')+' 어떻게 서로 이어져 있는가?'],
    dq:[(a,ar)=>J(a,'에','에')+' 가장 크게 영향을 주는 것은 무엇인가?']},
 
-  {n:'원인과 결과', re:/원인|결과|까닭|때문|영향을 미치|발생|왜 그런|필요함을|필요성/,
+  {n:'원인과 결과', re:/원인|결과|까닭|때문|영향을 미치|발생|왜 그런/,
    B:'결과', altB:'뒤따르는 일', fixB:true,
    gen:[a=>J(a,'이','가')+' 그렇게 되는 데에는 까닭이 있으며, 까닭을 알면 다음에 일어날 일을 짐작할 수 있다.',
         a=>'같은 까닭이라도 조건이 달라지면 '+J(a,'의','의')+' 모습은 다르게 나타난다.'],
@@ -707,6 +775,11 @@ function lensOf(r){
   if(r._lens) return r._lens;
   const w=[[r.t,5],[r.hae||'',2]];
   const ok=SUBJLENSOK[r.subj];
+  // 성취기준이 대놓고 까닭을 묻는다면 렌즈는 정해진 것이나 다름없다
+  if(/원인|이유|까닭|때문|왜 그러|영향을 미치/.test(r.t)){
+    const L0=LENSES.find(L=>L.n==='원인과 결과');
+    if(L0 && (!ok || ok.indexOf('원인과 결과')>=0)) return r._lens=L0;
+  }
   let best=null, bs=0;
   for(const L of LENSES){
     if(ok && ok.indexOf(L.n)<0) continue;
@@ -1606,6 +1679,23 @@ function panePlan(pane,r,terms){
   });
   pane.appendChild(g);
 
+  const iq=inqOf(r);
+  if(iq && iq.length){
+    pane.appendChild(secTitle('교육과정에 제시된 탐구 활동 — '+(r.a||'')+' 단원','교육과정 원문 그대로'));
+    pane.appendChild(el('div','lenswhy',
+      '성취기준과 나란히 「탐구 활동」으로 제시된 것입니다. 고려 사항과는 다른 절이며, 이 단원 성취기준에 두루 걸칩니다.'));
+    const ul=el('ul','tight');
+    iq.forEach(x=>{ const li=el('li'); li.appendChild(hl(x,terms)); ul.appendChild(li); });
+    pane.appendChild(ul);
+  }
+  if(r.hae){
+    pane.appendChild(secTitle('성취기준 해설','교육과정 원문 그대로'));
+    pane.appendChild(el('div','lenswhy',
+      '아래 개념·일반화·탐구 질문을 검토할 때 이 해설을 먼저 견주어 보세요. 교육과정이 이 성취기준을 어떻게 풀이했는지 밝힌 대목입니다.'));
+    const q=el('blockquote','quote'); q.appendChild(hl(r.hae,terms));
+    if(r.haePg) q.appendChild(el('div','src','— 2022 개정 '+r.subj+'과 교육과정(교육부 고시 제2022-33호) '+r.haePg+'쪽 성취기준 해설에서 인용'));
+    pane.appendChild(q);
+  }
   const rows=guideRows(r);
   if(rows.length){
     const direct=rows.filter(x=>x.direct), rest=rows.filter(x=>!x.direct);
@@ -2484,7 +2574,7 @@ function openHelp(){
 /* ---------- 시작 ---------- */
 function boot(data){
   BANDS=data.bands; SUBJ=data.subjects; STD=data.std; AREA=data.area;
-  DOM=data.dom; GUIDE=data.guide; GUIDEPG=data.guidePg||{}; SMETA=data.subjMeta;
+  DOM=data.dom; GUIDE=data.guide; GUIDEPG=data.guidePg||{}; INQACT=data.inqAct||{}; SMETA=data.subjMeta;
   window.__SRC=data.meta.src||[];
   window.__EVAL=data.eval||{};
   buildIndex(); buildSeries(); buildConceptIndex();

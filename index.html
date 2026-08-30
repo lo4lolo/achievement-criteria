@@ -188,6 +188,9 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 .rub{display:flex;gap:7px;align-items:flex-start;margin:4px 0;line-height:1.55}
 .rub .pill{flex:none;margin-top:2px}
 .lenswhy{font-size:12px;color:var(--dim);margin-top:3px}
+.card.hit{border-color:#111;border-width:2px}
+blockquote.quote{margin:8px 0;padding:10px 14px;border-left:3px solid #111;background:var(--soft,#f6f6f6);border-radius:0 6px 6px 0;line-height:1.65}
+.src{font-size:11.5px;color:var(--dim);margin-top:6px}
 </style>
 </head>
 <body>
@@ -323,6 +326,7 @@ function cos(a,b){ let d=0; const s=a.size<b.size?a:b, g=s===a?b:a;
 
 const areaOf = r => AREAIDX.get(r.b+'|'+r.s+'|'+r.ak);
 let DOMPICK={};
+let GUIDEPG={};
 try{ DOMPICK=JSON.parse(localStorage.getItem('dompick2022')||'{}'); }catch(e){}
 const domName = r => DOMPICK[r.c] || r.dom || null;
 const domOf  = r => { const n=domName(r); return n? DOMIDX.get(r.subj+'|'+n) : null; };
@@ -331,9 +335,70 @@ function setDom(r,name){
   try{ localStorage.setItem('dompick2022',JSON.stringify(DOMPICK)); }catch(e){}
   r._cbi=null; r._con=null;
 }
-const guideOf = r => GUIDE[r.subj+'|'+r.a] || GUIDE[r.subj+'|'+(r.dom||'')] || null;
+const guideKey = r => (GUIDE[r.subj+'|'+r.a] ? r.subj+'|'+r.a
+                     : (GUIDE[r.subj+'|'+(r.dom||'')] ? r.subj+'|'+(r.dom||'') : null));
+const guideOf = r => { const k=guideKey(r); return k? GUIDE[k] : null; };
+/* 고려 사항 가운데 이 성취기준을 바로 풀이하는 대목을 가려낸다.
+   그런 대목은 해설과 함께 인용으로 드러내야 선생님이 놓치지 않는다. */
+function guideRows(r){
+  if(r._gr) return r._gr;
+  const k=guideKey(r); if(!k) return r._gr=[];
+  const gd=GUIDE[k]||[], pgs=(typeof GUIDEPG!=='undefined'? (GUIDEPG[k]||[]) : []);
+  const key=(r.t+' '+(r.hae||'')).replace(/\s/g,'');
+  return r._gr=gd.map((t,i)=>{
+    const a=t.replace(/\s/g,''); let hit=0;
+    for(let j=0;j+3<=a.length;j++) if(key.includes(a.slice(j,j+3))) hit++;
+    const need=Math.max(4, Math.min(10, Math.round(a.length*0.10)));
+    return {t:t, pg:pgs[i], direct: a.length>=28 && hit>=need};
+  });
+}
 /* 내용 체계에서 이 성취기준 학년군의 범주별 내용 요소 */
+/* 교과마다 내용 체계의 결이 다르다. 국어·사회·과학·영어는 한 영역이 다시
+   하위 범주로 갈린다(과학의 '고체 지구·유체 지구·천체' 등). 성취기준이 어느
+   하위 범주에 놓이는지 가려내야 엉뚱한 내용 요소가 딸려 오지 않는다. */
+function subPick(r){
+  if(r._sub!==undefined) return r._sub;
+  const d=domOf(r);
+  r._sub=null;
+  if(d&&d.sub){
+    const own=(r.t+' '+(r.hae||'')+' '+((guideOf(r)||[]).join(' '))+' '+(r.a||'')).replace(/\s/g,'');
+    // 여러 하위 범주에 두루 나오는 말('우리나라의' 같은)은 가려내는 힘이 없다
+    if(!d._sw){
+      const cnt={}, nsub=new Set();
+      CATS.forEach(c2=>{ const it=(d.content[c2]||{})[r.band]||[], sv=((d.sub||{})[c2]||{})[r.band]||[];
+        it.forEach((x,i)=>{ if(!sv[i]) return; nsub.add(sv[i]);
+          const a=x.replace(/\s/g,''); const seen=new Set();
+          for(let j=0;j+2<=a.length;j++) seen.add(a.slice(j,j+2));
+          seen.forEach(w=>{ (cnt[w]=cnt[w]||new Set()).add(sv[i]); }); }); });
+      d._sw=new Set(Object.keys(cnt).filter(w=>cnt[w].size > Math.max(1, nsub.size/2)));
+    }
+    const sc={};
+    CATS.forEach(c=>{
+      const items=(d.content[c]||{})[r.band]||[], subs=((d.sub||{})[c]||{})[r.band]||[];
+      items.forEach((it,i)=>{ const sb=subs[i]; if(!sb) return;
+        const a=it.replace(/\s/g,''); let n=0;
+        for(let j=0;j+2<=a.length;j++){ const w=a.slice(j,j+2);
+          if(!d._sw.has(w) && own.includes(w)) n++; }
+        sc[sb]=(sc[sb]||0)+n; });
+    });
+    const ks=Object.keys(sc).sort((x,y)=>sc[y]-sc[x]);
+    if(ks.length && sc[ks[0]]>=3 && sc[ks[0]] > (sc[ks[1]]||0)) r._sub=ks[0];
+  }
+  return r._sub;
+}
 function contentOf(r){
+  const d=domOf(r); if(!d) return null;
+  const sb=subPick(r);
+  const out={}; let any=false;
+  CATS.forEach(c=>{ let v=(d.content[c]||{})[r.band]; if(!v||!v.length) return;
+    if(sb){ const subs=((d.sub||{})[c]||{})[r.band]||[];
+      const f=v.filter((x,i)=>!subs[i]||subs[i]===sb);
+      if(f.length) v=f; }
+    out[c]=v; any=true; });
+  return any?out:null;
+}
+/* 그 영역 전체(하위 범주로 좁히기 전)의 내용 요소 */
+function contentAllOf(r){
   const d=domOf(r); if(!d) return null;
   const out={}; let any=false;
   CATS.forEach(c=>{ const v=(d.content[c]||{})[r.band]; if(v&&v.length){ out[c]=v; any=true; } });
@@ -347,8 +412,8 @@ const JOSA_N = /([가-힣]{2,8})(으로써|으로서|이라는|에서의|에게�
 const STEM_N = /[하되지나오우거려]$/;
 /* 개념으로 삼을 수 없는 두루뭉술한 말 */
 /* 개념 목록에는 남기되, 일반화 문장의 짝으로는 쓰지 않는 말 */
-const ABSTRACT = /^(의미|뜻|특징|특성|유형|종류|조건|기준|역할|성질|상태|형태|모양|생김새|원리|개념|요소|대상|방법|과정|결과|위치|기능|쓰임|구조|모형|기법|주법|표현|감상|이해|활용|적용|분류|비교|관찰|조사|탐구|설명|파악|확인|점검|조정|생성|추론|해석|수집|계산|측정|실천|참여|변화|관계|영향|정의|종류별|사례|자료|정보|내용별)$/;
-const NOTCON = /^(내용|것|때|수|방법|활동|생각|사람|우리|자신|여러|다양|이해|사용|관련|필요|중요|모습|경우|이것|저것|여기|거기|정도|하나|가지|자기|서로|모두|다른|같은|위해|통해|바탕|중심|이상|이하|이때|무엇|어떤|여러 가지|점|일|말|글|것들|친구|선생|학교|공부|학습|수업|시간|장소)$/;
+const ABSTRACT = /^(의미|뜻|특징|특성|유형|종류|조건|기준|역할|성질|상태|형태|모양|생김새|원리|개념|요소|대상|방법|과정|결과|위치|기능|쓰임|구조|모형|기법|주법|표현|감상|이해|활용|적용|분류|비교|관찰|조사|탐구|설명|파악|확인|점검|조정|생성|추론|해석|수집|계산|측정|실천|참여|변화|관계|영향|정의|종류별|사례|자료|정보|내용별|측정기|장치|기구|도구|자료|기준별)$/;
+const NOTCON = /^(내용|것|때|수|방법|활동|생각|사람|우리|자신|여러|다양|이해|사용|관련|필요|중요|모습|경우|이것|저것|여기|거기|정도|하나|가지|자기|서로|모두|다른|같은|위해|통해|바탕|중심|이상|이하|이때|무엇|어떤|여러 가지|점|일|말|글|것들|친구|선생|학교|공부|학습|수업|시간|장소|측정기|장치|기구)$/;
 const ACTION_N = /^(파악|확인|조직|활용|표현|비교|분석|조사|관찰|이해|감상|정리|구성|점검|조정|선별|재구성|생성|추론|평가|해석|적용|탐색|탐구|설명|제시|수집|계산|측정|분류|실천|참여)$/;
 function nounsOf(text){
   const out=[]; const re=new RegExp(JOSA_N.source,'g'); let m;
@@ -573,11 +638,39 @@ function lensOf(r){
 }
 /* 영속적 이해: 그 영역의 핵심 아이디어 가운데 이 성취기준과 가장 가까운 원문 문장 */
 function enduringOf(r){
+  if(r._end!==undefined) return r._end;
   const d=domOf(r);
-  if(!d||!d.idea||!d.idea.length) return null;
-  let best=null, bs=-1;
-  d.idea.forEach(x=>{ const s=cos(r._v, vecOfText(x)); if(s>bs){ bs=s; best=x; } });
-  return {text:best, all:d.idea, domain:d.name};
+  if(!d||!d.idea||!d.idea.length) return r._end=null;
+  /* 영역 안 모든 핵심 아이디어에 두루 나오는 말('지구와 우주'의 '지구' 같은)은
+     가려내는 힘이 없다. 절반 넘게 나오는 말은 빼고 견준다. */
+  if(!d._common){
+    const cnt={};
+    d.idea.forEach(x=>{ const seen=new Set();
+      (x.match(/[가-힣]{2,}/g)||[]).forEach(w=>{
+        for(let n=2;n<=Math.min(4,w.length);n++) for(let j=0;j+n<=w.length;j++) seen.add(w.slice(j,j+n));
+      });
+      seen.forEach(w=>cnt[w]=(cnt[w]||0)+1); });
+    d._common=new Set(Object.keys(cnt).filter(w=>cnt[w] > d.idea.length/2));
+  }
+  const sibs=STD.filter(o=>o.s===r.s&&o.b===r.b&&o.a===r.a).map(o=>o.t).join(' ');
+  const ct=contentOf(r)||{};
+  const bag=r.t+' '+(r.hae||'')+' '+((guideOf(r)||[]).join(' '))+' '+sibs+' '
+          + CATS.map(c=>(ct[c]||[]).join(' ')).join(' ');
+  // 성취기준 쪽 낱말 조각 (영역 공통어는 뺀다)
+  const keys=new Set();
+  ((r.t+' '+(r.a||'')+' '+(r.hae||'')).match(/[가-힣]{2,}/g)||[]).forEach(w=>{
+    for(let n=2;n<=Math.min(4,w.length);n++) for(let j=0;j+n<=w.length;j++){
+      const s=w.slice(j,j+n); if(!d._common.has(s)) keys.add(s); } });
+  const V=vecOfText(bag);
+  const scored=d.idea.map(x=>{
+    let ov=0; keys.forEach(k=>{ if(x.includes(k)) ov += (k.length>=3? 1 : 0.4); });
+    return {t:x, ov:ov, cs:cos(V, vecOfText(x))};
+  }).sort((a,b)=> (b.ov-a.ov) || (b.cs-a.cs));
+  const top=scored[0];
+  // 겹치는 말이 없으면 이 영역에 딱 맞는 문장이 없다는 뜻이다. 단정하지 않는다.
+  const weak = top.ov < 1.2;
+  return r._end={text:top.t, all:d.idea, domain:d.name, weak:weak,
+    others:scored.slice(1,3).filter(z=>z.ov>=1.2).map(z=>z.t), sub:subPick(r)};
 }
 /* 일반화에 쓸 개념 짝을 고른다.
    A는 될 수 있으면 실체를 가리키는 말, B는 A와 겹치지 않는 다른 개념. */
@@ -588,7 +681,6 @@ function pickPair(cons, L, fallback){
   let B = '';
   if(!L.fixB) B = solid.find(x=>!clash(x,A)) || '';
   if(!B) B = clash(L.B,A) ? (L.altB||L.B) : L.B;
-  // 그래도 겹치면 A 쪽을 다른 개념으로 바꾼다
   if(clash(A,B)){
     const A2 = solid.find(x=>!clash(x,B)) || cons.find(x=>!clash(x,B));
     if(A2) return [A2, B];
@@ -807,7 +899,48 @@ function lessonTitle(r){
   }
   return x;
 }
+/* 정보공시 '단원명(교수·학습 내용)' 칸에 쓰는 서술.
+   성취기준만 옮기면 한 문장짜리가 많아 무엇을 가르치는지 드러나지 않는다.
+   그 학년군 내용 요소를 앞뒤에 붙여, 가르칠 내용이 보이도록 풀어 쓴다. */
+const LEAD_CUT=/^(간단한|다양한|여러 가지|여러|기본적인|알맞은|적절한)\s+/;
+function teachContent(r){
+  if(r._tc) return r._tc;
+  let full=toActivity((r.t||'').trim());
+  // 성취수준 B는 성취기준을 '무엇을 어느 만큼' 하는지로 풀어 쓴 원문이다.
+  // 성취기준보다 자세하면 그쪽을 뼈대로 삼아야 가르칠 내용이 드러난다.
+  if(r.B){
+    const b2=toActivity(r.B.replace(/\s+/g,' ').trim());
+    if(b2.length >= full.length*1.25 && b2.length <= 130) full=b2;
+  }
+  const ct=contentOf(r)||{};
+  const own=r.t+' '+(r.hae||'');
+  const flat=s=>(s||'').replace(/\s+/g,' ').trim();
+  // 성취기준에 이미 담긴 말인지 (3글자 잇달아 겹치면 담긴 것으로 본다)
+  const inStd=x=>{ const a=flat(x).replace(/\s/g,''), b=full.replace(/\s/g,'');
+    if(a.length<3) return b.includes(a);
+    let hit=0;
+    for(let i2=0;i2+3<=a.length;i2++) if(b.includes(a.slice(i2,i2+3))) hit++;
+    return hit >= (a.length-2)*0.6; };
+  const rel=cat=>(ct[cat]||[]).filter(usable).filter(x=>relatedTo(x,own)).filter(x=>!inStd(x));
 
+  // 바탕이 되는 앎 하나만 앞에 놓는다. 둘을 엮으면 문장이 무너진다.
+  let lead='';
+  const k=rel('지식·이해')[0];
+  if(k) lead=J(flat(k).replace(LEAD_CUT,''),'을','를')+' 알아보고, ';
+  else {
+    const s2=rel('과정·기능')[0];
+    if(s2 && full.length<30) lead=elemAct(flat(s2))+', ';
+  }
+  let out=lead+full;
+  if(out.length>100){
+    for(const re of TRIM){
+      if(out.length<=100) break;
+      const y=out.replace(new RegExp(re.source.replace('^',''),''),'');
+      if(y.length>=30 && y!==out) out=y;
+    }
+  }
+  return r._tc=flat(out);
+}
 /* 성취기준을 이어지는 활동으로 갈라 교수·학습 내용을 만든다 (정보공시 서술용) */
 const CONJ = /(?<=하고|되고|이고|보고|알고|갖고|주고|넣고|짓고|쓰고|읽고|듣고|찾고|세고|기르고|만들고)[,]?\s+/;
 function lessonActs(r){
@@ -849,7 +982,7 @@ function teachDraft(r){
   const A = cb0.pair[0] || cons[0] || r.a;
   const B = cb0.pair[1] || '';
   const acts = lessonActs(r);
-  const summary = lessonTitle(r);          // 정보공시 칸: 화살표·줄임표 없이 한 문구
+  const summary = teachContent(r);         // 정보공시 칸: 화살표·줄임표 없이 한 문구
   const inq = (r.q||[]).filter(x=>x&&x.length>3);
   let topic = r.a || areaKeyOf(r);
   if(/[?？]$|까$/.test(topic)) topic = cons[0] || '오늘 배울 내용';
@@ -1118,8 +1251,10 @@ function renderDetail(){
 /* 탭 1 — 성취기준·성취수준 */
 function paneStd(pane,r,terms){
   if(r.hae){
-    pane.appendChild(secTitle('성취기준 해설','교육과정 원문'));
-    const c=el('div','card'); c.appendChild(hl(r.hae,terms)); pane.appendChild(c);
+    pane.appendChild(secTitle('성취기준 해설','교육과정 원문 그대로'));
+    const q=el('blockquote','quote'); q.appendChild(hl(r.hae,terms));
+    if(r.haePg) q.appendChild(el('div','src','— 2022 개정 '+r.subj+'과 교육과정(교육부 고시 제2022-33호) '+r.haePg+'쪽'));
+    pane.appendChild(q);
   }
   pane.appendChild(secTitle('성취기준별 성취수준','성취수준 원문'));
   ['A','B','C'].forEach(L=>{
@@ -1171,12 +1306,22 @@ function paneCs(pane,r,terms){
     pane.appendChild(el('div','hint',
       `${r.subj}의 내용 체계 영역과 이 성취기준이 아직 이어지지 않았습니다. 아래 「교과 살펴보기」에서 교과 전체 내용 체계를 볼 수 있습니다.`));
   } else {
+    const sb=subPick(r), end=enduringOf(r);
     pane.appendChild(secTitle(`핵심 아이디어 — ${dm.name} 영역`,'교육과정 원문'));
+    if(end && !end.weak)
+      pane.appendChild(el('div','lenswhy','진하게 표시한 문장이 이 성취기준에 가장 가깝습니다. 나머지는 같은 영역의 다른 핵심 아이디어입니다.'));
+    else
+      pane.appendChild(el('div','lenswhy','이 영역은 여러 학년에 걸쳐 넓게 묶여 있어, 이 성취기준에 바로 맞아떨어지는 핵심 아이디어가 없습니다. 영역 전체를 참고해 직접 고르세요.'));
+    dm.idea.forEach(x=>{
+      const c=el('div', (end && !end.weak && x===end.text)? 'card hit' : 'card plain');
+      c.appendChild(hl(x,terms)); pane.appendChild(c); });
 
-    dm.idea.forEach(x=>{ const c=el('div','card'); c.appendChild(hl(x,terms)); pane.appendChild(c); });
-    const ct=contentOf(r);
+    const ct=contentOf(r), all=contentAllOf(r);
     if(ct){
-      pane.appendChild(secTitle(`내용 요소 — ${shortBand(r.band)}`,'교육과정 원문'));
+      pane.appendChild(secTitle(`내용 요소 — ${shortBand(r.band)}`
+        + (sb? ` · ${sb}` : ''),'교육과정 원문'));
+      if(sb) pane.appendChild(el('div','lenswhy',
+        `${r.subj}의 「${dm.name}」 영역은 다시 하위 범주로 갈립니다. 이 성취기준이 놓인 「${sb}」의 내용 요소만 추렸습니다.`));
       const g=el('div','grid3');
       CATS.forEach(c=>{
         const cell=el('div','card plain');
@@ -1186,6 +1331,17 @@ function paneCs(pane,r,terms){
         cell.appendChild(ul); g.appendChild(cell);
       });
       pane.appendChild(g);
+      if(sb && all){
+        const more=el('details');
+        more.appendChild(el('summary','catname',`${dm.name} 영역 전체 내용 요소 보기`));
+        const g2=el('div','grid3');
+        CATS.forEach(c=>{
+          const cell=el('div','card plain'); cell.appendChild(el('div','catname',c));
+          const ul=el('ul','tight');
+          (all[c]||['—']).forEach(x=>{ const li=el('li'); li.appendChild(hl(x,terms)); ul.appendChild(li); });
+          cell.appendChild(ul); g2.appendChild(cell); });
+        more.appendChild(g2); pane.appendChild(more);
+      }
     }
   }
   const a=areaOf(r);
@@ -1223,16 +1379,30 @@ function panePlan(pane,r,terms){
   k.concepts.forEach(c=>cw.appendChild(el('span', k.pair.indexOf(c)>=0?'pill solid':'pill', c)));
   pane.appendChild(cw);
   pane.appendChild(el('div','lenswhy','옮겨 쓸 수 있는 이름씨만 골랐습니다. 진하게 표시한 '
-    +'「'+k.pair[0]+'」와 「'+k.pair[1]+'」를 짝으로 삼아 아래 일반화 문장을 세웠습니다.'));
+    + '「'+k.pair[0]+'」'+J(k.pair[0],'과','와').slice(k.pair[0].length) + ' '
+    + '「'+k.pair[1]+'」'+J(k.pair[1],'을','를').slice(k.pair[1].length)
+    + ' 짝으로 삼아 아래 일반화 문장을 세웠습니다.'));
 
   if(k.enduring){
-    pane.appendChild(secTitle(`영속적 이해 — ${k.enduring.domain} 영역 핵심 아이디어`,'교육과정 원문'));
-    const c=el('div','card'); c.appendChild(hl(k.enduring.text,terms)); pane.appendChild(c);
-    if(k.enduring.all.length>1){
-      const more=el('details'); more.appendChild(el('summary','catname','같은 영역의 다른 핵심 아이디어 보기'));
-      k.enduring.all.filter(x=>x!==k.enduring.text).forEach(x=>{
-        const c2=el('div','card plain'); c2.textContent=x; more.appendChild(c2); });
-      pane.appendChild(more);
+    const e=k.enduring;
+    pane.appendChild(secTitle(`영속적 이해 — ${e.domain} 영역 핵심 아이디어`
+      + (e.sub? ` · ${e.sub}` : ''),'교육과정 원문'));
+    if(e.weak){
+      pane.appendChild(el('div','lenswhy',
+        '이 영역은 초·중학교에 걸쳐 넓게 묶여 있어 이 성취기준에 바로 맞아떨어지는 핵심 아이디어가 없습니다. 아래는 영역 전체이니 직접 고르거나 학년 수준에 맞게 고쳐 쓰세요.'));
+      e.all.forEach(x=>{ const c2=el('div','card plain'); c2.appendChild(hl(x,terms)); pane.appendChild(c2); });
+    } else {
+      const c=el('div','card'); c.appendChild(hl(e.text,terms)); pane.appendChild(c);
+      if(e.others.length){
+        pane.appendChild(el('div','lenswhy','다음 문장도 함께 볼 만합니다.'));
+        e.others.forEach(x=>{ const c2=el('div','card plain'); c2.textContent=x; pane.appendChild(c2); });
+      }
+      const rest=e.all.filter(x=>x!==e.text&&e.others.indexOf(x)<0);
+      if(rest.length){
+        const more=el('details'); more.appendChild(el('summary','catname','같은 영역의 다른 핵심 아이디어 보기'));
+        rest.forEach(x=>{ const c2=el('div','card plain'); c2.textContent=x; more.appendChild(c2); });
+        pane.appendChild(more);
+      }
     }
   }
   pane.appendChild(secTitle('일반화 문장','AI 초안'));
@@ -1252,18 +1422,52 @@ function panePlan(pane,r,terms){
   });
   pane.appendChild(g);
 
-  const gd=guideOf(r);
-  if(gd&&gd.length){
-    pane.appendChild(secTitle('성취기준 적용 시 고려 사항','교육과정 원문'));
-    const ul=el('ul','tight'); gd.forEach(x=>{ const li=el('li'); li.appendChild(hl(x,terms)); ul.appendChild(li); });
-    pane.appendChild(ul);
+  const rows=guideRows(r);
+  if(rows.length){
+    const direct=rows.filter(x=>x.direct), rest=rows.filter(x=>!x.direct);
+    pane.appendChild(secTitle('성취기준 적용 시 고려 사항','교육과정 원문 그대로'));
+    if(direct.length){
+      pane.appendChild(el('div','lenswhy','이 성취기준을 바로 풀이하는 대목입니다.'));
+      direct.forEach(x=>{
+        const q=el('blockquote','quote'); q.appendChild(hl(x.t,terms));
+        if(x.pg) q.appendChild(el('div','src','— '+r.subj+'과 교육과정 '+x.pg+'쪽'));
+        pane.appendChild(q); });
+    }
+    if(rest.length){
+      if(direct.length) pane.appendChild(el('div','lenswhy','같은 영역에 함께 제시된 그 밖의 고려 사항입니다.'));
+      const ul=el('ul','tight');
+      rest.forEach(x=>{ const li=el('li'); li.appendChild(hl(x.t,terms)); ul.appendChild(li); });
+      pane.appendChild(ul);
+    }
+    const pgs=[...new Set(rows.map(x=>x.pg).filter(Boolean))];
+    if(pgs.length) pane.appendChild(el('div','src',
+      '출처: 교육부, 2022 개정 '+r.subj+'과 교육과정(교육부 고시 제2022-33호 별책) '
+      + (pgs.length>1? pgs[0]+'~'+pgs[pgs.length-1] : pgs[0]) + '쪽'));
   }
   const sm=SMETA[r.subj];
   if(sm){
-    pane.appendChild(secTitle(`${r.subj}과 역량`,'교육과정 원문'));
-    if(sm.comp.length){ const cw2=el('div'); sm.comp.forEach(c=>cw2.appendChild(el('span','pill',c))); pane.appendChild(cw2); }
-    else pane.appendChild(el('div','hint',`${r.subj}과 교육과정에는 교과 역량 목록이 따로 제시되어 있지 않습니다. 아래 설명 문단을 참고하세요.`));
-    (sm.compText||[]).forEach(t=>{ const c=el('div','card'); c.textContent=t; pane.appendChild(c); });
+    pane.appendChild(secTitle(`${r.subj}과 교과 역량`,'교육과정 원문 그대로'));
+    if(sm.comp.length){
+      const cw2=el('div'); sm.comp.forEach(c=>cw2.appendChild(el('span','pill solid',c)));
+      pane.appendChild(cw2);
+      const dsc=sm.compDesc||{};
+      const has=sm.comp.filter(c=>dsc[c]);
+      if(has.length){
+        has.forEach(c=>{
+          const card=el('div','card plain');
+          card.appendChild(el('div','catname',c));
+          card.appendChild(el('div',null,dsc[c]));
+          pane.appendChild(card); });
+        if(has.length<sm.comp.length)
+          pane.appendChild(el('div','lenswhy','나머지 역량은 원문에 이름만 제시되어 있고 따로 풀이가 없습니다.'));
+      } else {
+        pane.appendChild(el('div','lenswhy',
+          r.subj+'과 교육과정에는 역량 이름만 제시되어 있고 역량별 풀이가 따로 없습니다. 아래 성격·목표 서술을 참고하세요.'));
+      }
+    }
+    else pane.appendChild(el('div','hint',
+      r.subj+'과 교육과정에는 교과 역량 목록이 따로 제시되어 있지 않습니다. 총론 핵심역량과 이어 서술한 아래 문단을 참고하세요.'));
+    (sm.compText||[]).forEach(t=>{ const c=el('div','card plain'); c.textContent=t; pane.appendChild(c); });
   }
 }
 
@@ -1326,7 +1530,7 @@ function paneLesson(pane,r,terms){
   spot.appendChild(el('span','lbl','정보공시 평가 · 단원명(교수·학습 내용) 칸'));
   spot.appendChild(el('div','big', td.summary));
   const sb=el('div','sub');
-  sb.textContent='성취기준을 그대로 살려 한 문구로 다듬은 초안입니다. 줄이거나 나누지 않았으니 학급 상황에 맞게 손보세요.';
+  sb.textContent='성취기준과 그 학년군 내용 요소를 엮어, 무엇을 가르치는지 드러나도록 풀어 쓴 초안입니다. 줄임표로 자르거나 화살표로 잇지 않았습니다. 학급 상황에 맞게 손보세요.';
   spot.appendChild(sb);
   const sbtn=el('div','dact');
   const bCopySum=el('button','btn on','이 문장 복사');
@@ -2055,7 +2259,7 @@ function openHelp(){
 /* ---------- 시작 ---------- */
 function boot(data){
   BANDS=data.bands; SUBJ=data.subjects; STD=data.std; AREA=data.area;
-  DOM=data.dom; GUIDE=data.guide; SMETA=data.subjMeta;
+  DOM=data.dom; GUIDE=data.guide; GUIDEPG=data.guidePg||{}; SMETA=data.subjMeta;
   window.__SRC=data.meta.src||[];
   window.__EVAL=data.eval||{};
   buildIndex(); buildSeries(); buildConceptIndex();

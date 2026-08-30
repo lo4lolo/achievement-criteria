@@ -191,6 +191,16 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 .card.hit{border-color:#111;border-width:2px}
 blockquote.quote{margin:8px 0;padding:10px 14px;border-left:3px solid #111;background:var(--soft,#f6f6f6);border-radius:0 6px 6px 0;line-height:1.65}
 .src{font-size:11.5px;color:var(--dim);margin-top:6px}
+.mapwrap{position:relative}
+.peek{position:absolute;right:10px;top:52px;width:min(340px,calc(100% - 24px));
+  background:var(--bg,#fff);border:1px solid var(--line,#ddd);border-radius:10px;
+  box-shadow:0 6px 24px rgba(0,0,0,.14);padding:12px 14px 10px;z-index:5;max-height:calc(100% - 70px);overflow:auto}
+.peekx{position:absolute;right:8px;top:6px;border:0;background:none;cursor:pointer;font-size:14px;color:var(--dim)}
+.peekcode{font-weight:700;margin:4px 0 2px}
+.peektext{line-height:1.6}
+.peekhae{font-size:12.5px;color:var(--dim);margin-top:6px;line-height:1.55}
+.peek .dact{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
+.backbtn+.backbtn{margin-left:6px}
 </style>
 </head>
 <body>
@@ -413,7 +423,7 @@ const STEM_N = /[하되지나오우거려]$/;
 /* 개념으로 삼을 수 없는 두루뭉술한 말 */
 /* 개념 목록에는 남기되, 일반화 문장의 짝으로는 쓰지 않는 말 */
 const ABSTRACT = /^(의미|뜻|특징|특성|유형|종류|조건|기준|역할|성질|상태|형태|모양|생김새|원리|개념|요소|대상|방법|과정|결과|위치|기능|쓰임|구조|모형|기법|주법|표현|감상|이해|활용|적용|분류|비교|관찰|조사|탐구|설명|파악|확인|점검|조정|생성|추론|해석|수집|계산|측정|실천|참여|변화|관계|영향|정의|종류별|사례|자료|정보|내용별|측정기|장치|기구|도구|자료|기준별)$/;
-const NOTCON = /^(내용|것|때|수|방법|활동|생각|사람|우리|자신|여러|다양|이해|사용|관련|필요|중요|모습|경우|이것|저것|여기|거기|정도|하나|가지|자기|서로|모두|다른|같은|위해|통해|바탕|중심|이상|이하|이때|무엇|어떤|여러 가지|점|일|말|글|것들|친구|선생|학교|공부|학습|수업|시간|장소|측정기|장치|기구)$/;
+const NOTCON = /^(내용|것|때|수|방법|활동|생각|사람|우리|자신|여러|다양|이해|사용|관련|필요|중요|모습|경우|이것|저것|여기|거기|정도|하나|가지|자기|서로|모두|다른|같은|위해|통해|바탕|중심|이상|이하|이때|무엇|어떤|여러 가지|점|일|말|글|것들|친구|선생|학교|공부|학습|수업|시간|장소|측정기|장치|기구|일상생활|생활|사회|주변|있음|자연|세계|현상|종류|상황|과학|물체들|것임|위해서|대해서|통해서|위하여|이루|자라|한살|하기|되기|흥미|관심|호기심|즐거움|보람|자신감|참여|노력|실천)$/;
 const ACTION_N = /^(파악|확인|조직|활용|표현|비교|분석|조사|관찰|이해|감상|정리|구성|점검|조정|선별|재구성|생성|추론|평가|해석|적용|탐색|탐구|설명|제시|수집|계산|측정|분류|실천|참여)$/;
 function nounsOf(text){
   const out=[]; const re=new RegExp(JOSA_N.source,'g'); let m;
@@ -429,7 +439,7 @@ function nounsOf(text){
 }
 /* 내용 요소에서 개념 뽑기 — 지식·이해는 통째로, 과정·기능은 다루는 대상만 */
 function conceptOfElement(x, whole){
-  let s=(x||'').replace(/\s*하기$|\s*기$/,'').trim();
+  let s=(x||'').replace(/\s*하기$/,'').trim();
   if(!s) return null;
   if(whole) return (s.length>=2 && s.length<=14) ? s : null;
   const byJosa=nounsOf(s);
@@ -449,6 +459,37 @@ function relatedTo(x, own){
   for(let i=0;i+3<=a.length;i++) if(b.includes(a.slice(i,i+3))) return true;
   return false;
 }
+/* 내용 요소가 이 성취기준을 정말 가리키는지 — 요소의 알맹이 낱말이 성취기준에 있어야 한다.
+   '동물의 생활' 성취기준에 '동물의 한살이'가 딸려 오는 것을 막는다. */
+function coreWord(x){
+  const w=(x||'').replace(/[·,()]/g,' ').split(/\s+/).filter(Boolean);
+  if(!w.length) return '';
+  return w[w.length-1].replace(/(의|을|를|이|가|은|는|와|과|에|로)$/,'');
+}
+function relatedCore(x, own){
+  const cw=coreWord(x);
+  if(cw.length<2) return false;
+  return own.replace(/\s/g,'').includes(cw);
+}
+/* '동물 분류·바다의 특징·도구의 이용'처럼 뒤에 붙은 행위·속성 말을 떼어
+   가리키는 대상만 남긴다. 남는 말이 시원치 않으면 그 개념은 버린다. */
+const TAIL=/\s*(의)?\s*(분류|이용|활용|특징|특성|조건|성질|상태|방법|과정|구조|기능|역할|종류|모습|현상)$/;
+function trimTail(x){
+  x=(x||'').trim();
+  if(!TAIL.test(x)) return x;
+  const head=x.replace(TAIL,'').replace(/(의|을|를|이|가|은|는)$/,'').trim();
+  if(head.length<2) return '';
+  if(NOTCON.test(head) || /^(세|네|두|여러|다양한|여러 가지|한|자라는|이루는)/.test(head)) return '';
+  return head;
+}
+/* 개념은 문장에 넣어 읽을 만큼 짧아야 한다 */
+function shortConcept(x){
+  x=(x||'').trim();
+  if(x.length<=9) return x;
+  const w=x.split(/\s+/);
+  if(w.length>=2){ const t=w.slice(-2).join(' '); if(t.length<=12) return t; }
+  return w[w.length-1] || x;
+}
 function conceptsOf(r,k){
   if(!r._con){
     const ct=contentOf(r)||{};
@@ -456,16 +497,25 @@ function conceptsOf(r,k){
     const push=x=>{ if(!x||x.length<2||NOTCON.test(x)) return;
       if(out.some(o=>o===x||o.includes(x)||x.includes(o))) return;
       out.push(x); };
-    // 성취기준이 먼저다. 내용 요소는 성취기준과 낱말이 겹칠 때만 보탠다.
     const own = r.t + ' ' + (r.hae || '');
     const related = x => relatedTo(x, own);
+    // ① 내용 요소는 교육과정이 쓴 낱말 그대로라 가장 믿을 만하다.
+    //    하위 범주로 좁혀 두었으므로 이 성취기준과 맞물리는 것만 남는다.
+    const flat=own.replace(/\s/g,'');
+    const ov=x=>{ const a=(x||'').replace(/\s/g,''); let n=0;
+      for(let i=0;i+2<=a.length;i++) if(flat.includes(a.slice(i,i+2))) n++;
+      return n; };
+    (ct['지식·이해']||[]).filter(usable).filter(x=>relatedCore(x, own))
+      .map(x=>[x, ov(x)]).sort((a,b)=>b[1]-a[1])
+      .forEach(z=>{ const cc=conceptOfElement(z[0],true);
+        if(cc) push(trimTail(shortConcept(cc))); });
+    // ② 그 다음이 성취기준에서 뽑은 이름씨
     nounsOf(r.t).slice(0,4).forEach(push);
-    (ct['지식·이해']||[]).filter(usable).forEach(x=>{ const c=conceptOfElement(x,true);
-      if(c && related(c)) push(c); });
-    (ct['과정·기능']||[]).filter(usable).forEach(x=>{ const c=conceptOfElement(x,false);
-      if(c && related(c)) push(c); });
+    (ct['과정·기능']||[]).filter(usable).forEach(x=>{ const cc=conceptOfElement(x,false);
+      if(cc && related(cc)) push(trimTail(shortConcept(cc))); });
     if(out.length<2){
-      (ct['지식·이해']||[]).filter(usable).slice(0,2).forEach(x=>push(conceptOfElement(x,true)));
+      (ct['지식·이해']||[]).filter(usable).slice(0,2)
+        .forEach(x=>push(trimTail(shortConcept(conceptOfElement(x,true)))));
     }
     if(!out.length) push(areaKeyOf(r));
     r._con=out.slice(0,6);
@@ -539,15 +589,15 @@ function elemNoun(x){
 const elemAct = x => /하기$|기$/.test((x||'').trim()) ? (x||'').trim() : toActivity(x);
 
 const LENSES=[
-  {n:'변화', re:/변화|달라지|바뀌|성장|발달|흐름|시대|과거|미래|계절|순환|한살이|자라/,
-   B:'시간', altB:'지나온 흐름',
-   gen:[(a,b)=>J(a,'은','는')+' '+J(b,'에','에')+' 따라 달라지며, 그 달라짐에는 일정한 흐름과 까닭이 있다.',
-        (a,b)=>J(a,'의','의')+' 달라진 모습을 견주어 보면 다음에 올 모습을 짐작할 수 있다.'],
-   cq:[(a,b)=>J(a,'은','는')+' 왜 그대로 있지 않고 달라지는가?',
-       (a,b)=>J(a,'의','의')+' 달라짐에는 어떤 흐름이 있는가?'],
+  {n:'변화', re:/변화|달라지|바뀌|성장|발달|흐름|시대|과거|미래|계절|순환|한살이|자라|되어 가/,
+   B:'시간', altB:'지나온 흐름', fixB:true,
+   gen:[a=>J(a,'은','는')+' 시간이 흐르면서 일정한 차례를 따라 달라지며, 그 달라짐에는 까닭이 있다.',
+        a=>J(a,'의','의')+' 달라진 모습을 견주어 보면 다음에 올 모습을 짐작할 수 있다.'],
+   cq:[a=>J(a,'은','는')+' 왜 그대로 있지 않고 달라지는가?',
+       a=>J(a,'의','의')+' 달라짐에는 어떤 차례가 있는가?'],
    dq:[(a,ar)=>J(a,'의','의')+' 변화는 언제나 나아지는 쪽으로 일어나는가?']},
 
-  {n:'관계', re:/관계|영향|상호|연결|연계|더불어|함께|사이|의존|균형|어우러|주고받/,
+  {n:'관계', re:/관계|영향|상호|연결|연계|더불어|함께|사이|의존|균형|어우러|주고받|따라 달라/,
    B:'둘레의 환경', altB:'서로 이어진 것',
    gen:[(a,b)=>J(a,'과','와')+' '+J(b,'은','는')+' 서로 맞물려 있어, 하나가 달라지면 다른 하나도 달라진다.',
         (a,b)=>J(a,'과','와')+' '+J(b,'의','의')+' 관계를 알면 하나만 볼 때는 보이지 않던 것이 보인다.'],
@@ -555,85 +605,123 @@ const LENSES=[
        (a,b)=>J(a,'과','와')+' '+J(b,'은','는')+' 어떻게 서로 이어져 있는가?'],
    dq:[(a,ar)=>J(a,'에','에')+' 가장 크게 영향을 주는 것은 무엇인가?']},
 
-  {n:'원인과 결과', re:/원인|결과|까닭|때문|영향을 미치|발생/,
-   B:'결과', altB:'뒤따르는 일',
-   gen:[(a,b)=>J(a,'에는','에는')+' 그렇게 되는 까닭이 있으며, 까닭을 알면 '+J(b,'을','를')+' 짐작하고 대비할 수 있다.',
-        (a,b)=>'같은 까닭이라도 조건이 달라지면 '+J(b,'은','는')+' 다르게 나타난다.'],
-   cq:[(a,b)=>J(a,'은','는')+' 어떤 까닭으로 일어나는가?',
-       (a,b)=>'까닭을 알면 '+J(b,'을','를')+' 어떻게 달리할 수 있는가?'],
+  {n:'원인과 결과', re:/원인|결과|까닭|때문|영향을 미치|발생|왜 그런|필요함을|필요성/,
+   B:'결과', altB:'뒤따르는 일', fixB:true,
+   gen:[a=>J(a,'이','가')+' 그렇게 되는 데에는 까닭이 있으며, 까닭을 알면 다음에 일어날 일을 짐작할 수 있다.',
+        a=>'같은 까닭이라도 조건이 달라지면 '+J(a,'의','의')+' 모습은 다르게 나타난다.'],
+   cq:[a=>J(a,'은','는')+' 어떤 까닭으로 일어나는가?',
+       a=>'조건을 바꾸면 '+J(a,'은','는')+' 어떻게 달라지는가?'],
    dq:[(a,ar)=>J(a,'의','의')+' 결과에 대한 책임은 누구에게 있는가?']},
 
-  {n:'체계와 구조', re:/체계|구조|구성|조직|기관|계통|질서|짜임|순서|절차|단계|차례/,
-   B:'전체', altB:'짜임새',
-   gen:[(a,b)=>J(a,'은','는')+' 여러 부분이 짜임새를 이루고 있으며, 각 부분은 제 몫을 하며 '+J(b,'을','를')+' 이룬다.',
-        (a,b)=>'부분이 놓이는 자리와 차례가 달라지면 '+J(b,'의','의')+' 모습도 달라진다.'],
-   cq:[(a,b)=>J(a,'의','의')+' 각 부분은 왜 그렇게 짜여 있는가?',
-       (a,b)=>'한 부분이 빠지면 '+J(b,'에','에')+' 무슨 일이 일어나는가?'],
+  {n:'체계와 구조', re:/체계|구조|구성|조직|기관|계통|질서|짜임|절차|단계|차례|이루어져|둘러싸/,
+   B:'전체', altB:'짜임새', fixB:true,
+   gen:[a=>J(a,'은','는')+' 여러 부분이 짜임을 이루고 있으며, 각 부분은 저마다 맡은 몫이 있다.',
+        a=>'한 부분이 달라지면 '+J(a,'의','의')+' 전체 모습도 함께 달라진다.'],
+   cq:[a=>J(a,'은','는')+' 어떤 부분들로 이루어져 있는가?',
+       a=>'한 부분이 빠지면 '+J(a,'에','에')+' 무슨 일이 일어나는가?'],
    dq:[(a,ar)=>J(a,'의','의')+' 짜임 가운데 무엇이 가장 중요한가?']},
 
-  {n:'형태와 기능', re:/모양|생김새|기능|쓰임|용도|분류|도구|만드는 방법/,
+  {n:'형태와 기능', re:/모양|생김새|겉모습|구조를 관찰|분류|특징에 따라|성질을 이용|쓰임새/,
+   re2:/기능|하는 일|쓰임|용도|역할|분류|특징|성질/,
    B:'하는 일', altB:'쓰임새', fixB:true,
-   gen:[(a,b)=>J(a,'의','의')+' 생김새와 성질은 '+J(b,'과','와')+' 맞닿아 있다.',
-        (a,b)=>J(b,'이','가')+' 달라지면 그에 맞게 '+J(a,'의','의')+' 생김새도 달라진다.'],
-   cq:[(a,b)=>J(a,'의','의')+' 생김새는 '+J(b,'과','와')+' 어떻게 이어지는가?',
-       (a,b)=>J(a,'이','가')+' 그런 생김새를 갖게 된 까닭은 무엇인가?'],
+   gen:[a=>J(a,'의','의')+' 생김새와 성질은 그것이 하는 일과 맞닿아 있다.',
+        a=>'하는 일이 달라지면 그에 맞게 '+J(a,'의','의')+' 생김새와 성질도 달라진다.'],
+   cq:[a=>J(a,'의','의')+' 생김새는 하는 일과 어떻게 이어지는가?',
+       a=>'무엇을 기준으로 '+J(a,'을','를')+' 나눌 수 있는가?'],
    dq:[(a,ar)=>J(a,'의','의')+' 생김새가 지금과 달랐다면 무엇이 달라졌을까?']},
 
-  {n:'패턴과 규칙', re:/규칙|패턴|반복|배열|계열|일정한|예측|법칙|어림/,
+  {n:'패턴과 규칙', re:/규칙|패턴|반복|배열|계열|일정한|예측|법칙|어림|규칙성/,
    B:'다음에 올 것', altB:'새로운 경우', fixB:true,
-   gen:[(a,b)=>J(a,'에는','에는')+' 되풀이되는 규칙이 있어, 규칙을 찾으면 '+J(b,'을','를')+' 짐작할 수 있다.',
-        (a,b)=>'규칙을 말이나 식으로 나타내면 새로운 경우에도 그대로 쓸 수 있다.'],
-   cq:[(a,b)=>a+'에서 되풀이되는 규칙은 무엇인가?',
-       (a,b)=>'찾은 규칙은 다른 경우에도 그대로 들어맞는가?'],
+   gen:[a=>J(a,'에는','에는')+' 되풀이되는 규칙이 있어, 규칙을 찾으면 다음을 짐작할 수 있다.',
+        a=>'규칙을 말이나 식으로 나타내면 새로운 경우에도 그대로 쓸 수 있다.'],
+   cq:[a=>a+'에서 되풀이되는 규칙은 무엇인가?',
+       a=>'찾은 규칙은 다른 경우에도 그대로 들어맞는가?'],
    dq:[(a,ar)=>J(a,'의','의')+' 규칙은 언제나 들어맞는가?']},
 
-  {n:'관점', re:/관점|입장|의견|해석|다양성|편견|존중|차이|서로 다른|까닭을 들어/,
-   B:'겪은 일', altB:'서로 다른 자리',
-   gen:[(a,b)=>'같은 '+a+'도 보는 사람의 자리와 '+J(b,'에','에')+' 따라 다르게 읽힌다.',
-        (a,b)=>'서로 다르게 보는 까닭을 알면 나와 다른 생각도 헤아릴 수 있다.'],
-   cq:[(a,b)=>'같은 '+J(a,'을','를')+' 사람마다 다르게 보는 까닭은 무엇인가?',
-       (a,b)=>'어떤 근거가 있을 때 그 생각을 받아들일 만한가?'],
-   dq:[(a,ar)=>a+'에 대한 서로 다른 생각 가운데 무엇이 더 그럴듯한가?']},
+  {n:'관점', re:/관점|입장|의견|해석|다양성|편견|존중|차이|서로 다른|까닭을 들어|짐작하/,
+   B:'겪은 일', altB:'서로 다른 자리', fixB:true,
+   gen:[a=>'같은 '+a+'도 보는 사람의 자리와 겪은 일에 따라 다르게 읽힌다.',
+        a=>'서로 다르게 보는 까닭을 알면 나와 다른 생각도 헤아릴 수 있다.'],
+   cq:[a=>'같은 '+J(a,'을','를')+' 사람마다 다르게 보는 까닭은 무엇인가?',
+       a=>'어떤 근거가 있을 때 그 생각을 받아들일 만한가?'],
+   dq:[(a,ar)=>(ar||a)+'에 대한 서로 다른 생각 가운데 무엇이 더 그럴듯한가?']},
 
   {n:'소통', re:/듣고|말하|대화|의사소통|발표|토의|토론|매체|전달|나누며|주고받|묻고/,
    B:'상황', altB:'듣는 이',
-   gen:[(a,b)=>J(a,'과','와')+' '+J(b,'을','를')+' 함께 헤아려 주고받을 때 뜻이 온전히 전해진다.',
-        (a,b)=>'같은 말이라도 '+J(b,'에','에')+' 따라 다르게 받아들여진다.'],
+   gen:[(a,b)=>J(a,'은','는')+' 말하는 이와 듣는 이가 놓인 '+J(b,'에','에')+' 따라 달라진다.',
+        (a,b)=>'상대를 헤아리며 주고받을 때 뜻이 온전히 전해진다.'],
    cq:[(a,b)=>J(a,'은','는')+' '+J(b,'에','에')+' 따라 어떻게 달라지는가?',
        (a,b)=>'뜻이 잘 전해지지 않을 때 무엇을 고쳐야 하는가?'],
    dq:[(a,ar)=>(ar||a)+'에서 가장 지켜야 할 약속은 무엇인가?']},
 
   {n:'표현', re:/표현|창작|감상|작품|노래|연주|그리|만들|상상|아름다움|꾸미|나타내/,
    B:'생각과 느낌', altB:'나타내는 방법', fixB:true,
-   gen:[(a,b)=>J(b,'은','는')+' '+J(a,'을','를')+' 통해 드러나며, 어떻게 나타내느냐가 곧 뜻의 한 부분이 된다.',
-        (a,b)=>'같은 '+b+'도 나타내는 방법을 달리하면 받는 느낌이 달라진다.'],
-   cq:[(a,b)=>J(a,'을','를')+' 달리하면 '+J(b,'은','는')+' 어떻게 달라지는가?',
-       (a,b)=>'무엇을 보고 그 '+b+'을 읽어 낼 수 있는가?'],
+   gen:[a=>'생각과 느낌은 '+J(a,'을','를')+' 통해 드러나며, 어떻게 나타내느냐가 곧 뜻의 한 부분이 된다.',
+        a=>'같은 생각도 '+J(a,'을','를')+' 달리하면 받는 느낌이 달라진다.'],
+   cq:[a=>J(a,'을','를')+' 달리하면 전해지는 느낌은 어떻게 달라지는가?',
+       a=>'무엇을 보고 만든 이의 생각을 읽어 낼 수 있는가?'],
    dq:[(a,ar)=>'좋은 '+J(ar||a,'이란','란')+' 무엇으로 가릴 수 있는가?']},
 
   {n:'책임과 실천', re:/실천|참여|태도|노력|지속가능|보호|안전|권리|배려|봉사|시민|지키|아끼|돌보/,
-   B:'생활', altB:'날마다의 삶',
-   gen:[(a,b)=>J(a,'을','를')+' 아는 데서 그치지 않고 '+J(b,'에서','에서')+' 실천할 때 비로소 뜻을 갖는다.',
-        (a,b)=>'작은 실천이 쌓이면 나와 둘레의 '+J(b,'이','가')+' 달라진다.'],
-   cq:[(a,b)=>J(a,'은','는')+' 왜 지켜야 하는가?',
-       (a,b)=>J(a,'을','를')+' 실천하기 어려운 까닭은 무엇인가?'],
+   B:'생활', altB:'날마다의 삶', fixB:true,
+   gen:[a=>J(a,'은','는')+' 아는 데서 그치지 않고 생활에서 실천할 때 비로소 뜻을 갖는다.',
+        a=>'작은 실천이 쌓이면 나와 둘레의 삶이 달라진다.'],
+   cq:[a=>J(a,'은','는')+' 왜 지켜야 하는가?',
+       a=>J(a,'을','를')+' 실천하기 어려운 까닭은 무엇인가?'],
    dq:[(a,ar)=>(ar||a)+'에서 우리가 지금 실천할 수 있는 일은 무엇인가?']},
 ];
-/* 교과가 즐겨 쓰는 렌즈 — 성취기준에 단서가 약할 때 기댄다 */
+/* 교과 성격에 맞지 않는 렌즈는 아예 후보에서 뺀다.
+   과학 성취기준에 '관점'이나 '소통' 렌즈가 붙으면 문장이 통째로 헛말이 된다. */
+const SUBJLENSOK={
+  '국어':['소통','표현','관점','관계','체계와 구조','책임과 실천','변화','원인과 결과'],
+  '수학':['패턴과 규칙','관계','체계와 구조','변화','형태와 기능','원인과 결과'],
+  '사회':['관계','변화','원인과 결과','관점','책임과 실천','체계와 구조'],
+  '과학':['변화','관계','원인과 결과','체계와 구조','형태와 기능','패턴과 규칙','책임과 실천'],
+  '도덕':['책임과 실천','관점','관계','변화'],
+  '체육':['형태와 기능','책임과 실천','관계','변화','체계와 구조'],
+  '음악':['표현','관계','형태와 기능','변화','체계와 구조'],
+  '미술':['표현','관점','관계','형태와 기능','변화'],
+  '영어':['소통','표현','관계','체계와 구조'],
+  '실과':['형태와 기능','책임과 실천','체계와 구조','관계','원인과 결과','변화'],
+  '바른 생활':['책임과 실천','관계','관점','변화'],
+  '슬기로운 생활':['형태와 기능','관계','변화','원인과 결과','체계와 구조'],
+  '즐거운 생활':['표현','관계','책임과 실천'],
+};
+/* 영역마다 결이 다르다. 성취기준 낱말로 가려지지 않을 때 여기에 기댄다. */
+const DOMLENS={
+  '과학|운동과 에너지':'원인과 결과', '과학|물질':'형태와 기능', '과학|생명':'체계와 구조',
+  '과학|지구와 우주':'체계와 구조', '과학|과학과 사회':'책임과 실천',
+  '사회|자연환경과 인간생활':'관계', '사회|인문환경과 인간생활':'관계',
+  '사회|지속가능한 세계':'책임과 실천', '사회|정치':'체계와 구조', '사회|법':'체계와 구조',
+  '사회|경제':'관계', '사회|사회·문화':'관점', '사회|역사 일반':'변화',
+  '사회|지역사':'변화', '사회|한국사':'변화', '사회|지리 인식':'관계',
+  '수학|수와 연산':'패턴과 규칙', '수학|변화와 관계':'관계',
+  '수학|도형과 측정':'형태와 기능', '수학|자료와 가능성':'패턴과 규칙',
+  '국어|듣기·말하기':'소통', '국어|읽기':'관점', '국어|쓰기':'표현',
+  '국어|문법':'체계와 구조', '국어|문학':'표현', '국어|매체':'소통',
+};
 const SUBJLENS={'국어':'소통','수학':'패턴과 규칙','사회':'관계','과학':'체계와 구조','도덕':'책임과 실천',
   '체육':'형태와 기능','음악':'표현','미술':'표현','영어':'소통','실과':'형태와 기능',
   '바른 생활':'책임과 실천','슬기로운 생활':'형태와 기능','즐거운 생활':'표현'};
 function lensOf(r){
   if(r._lens) return r._lens;
-  const ct=contentOf(r)||{};
-  const w=[[r.t,3],[r.hae||'',1],[(ct['과정·기능']||[]).join(' '),1],[(ct['가치·태도']||[]).join(' '),1]];
+  const w=[[r.t,5],[r.hae||'',2]];
+  const ok=SUBJLENSOK[r.subj];
   let best=null, bs=0;
   for(const L of LENSES){
+    if(ok && ok.indexOf(L.n)<0) continue;
     let sc=0;
     w.forEach(p=>{ const m=(p[0]||'').match(L.re); if(m) sc+=m.length*p[1]; });
+    // 짝이 되는 말이 함께 있어야 성립하는 렌즈가 있다(형태 ↔ 기능)
+    if(L.re2){ if(!L.re2.test(w.map(p=>p[0]).join(' '))) sc=0; }
     if(sc>bs){ best=L; bs=sc; }
   }
-  if(!best) best=LENSES.find(L=>L.n===(SUBJLENS[r.subj]||'관계'))||LENSES[1];
+  if(!best){
+    const dm=domOf(r);
+    const key=r.subj+'|'+(dm?dm.name:'');
+    const nm=DOMLENS[key] || SUBJLENS[r.subj] || '관계';
+    best=LENSES.find(L=>L.n===nm)||LENSES[1];
+  }
   return r._lens=best;
 }
 /* 영속적 이해: 그 영역의 핵심 아이디어 가운데 이 성취기준과 가장 가까운 원문 문장 */
@@ -793,6 +881,17 @@ function greedyPieces(t){
   return res;
 }
 let HILITE=[], RELAX=null;
+/* 학년군·교과·영역을 고른 채 검색하면 그 범위 안에서만 찾는다.
+   범위 밖에 걸리는 것이 있는지 알려 주어야 '왜 안 나오지' 하는 일이 없다. */
+function searchAllScope(){
+  const b=new Set(S.bands), s=new Set(S.subjs), a=new Set(S.areas);
+  S.bands.clear(); S.subjs.clear(); S.areas.clear();
+  let out=[];
+  try{ out=filtered(); } finally {
+    b.forEach(x=>S.bands.add(x)); s.forEach(x=>S.subjs.add(x)); a.forEach(x=>S.areas.add(x));
+  }
+  return out;
+}
 function filtered(){
   const raw=S.q.trim();
   const base=STD.filter(r=>
@@ -1061,6 +1160,35 @@ const FEEDBACK = {
   '과정·기능': '결과보다 하는 과정을 보고, 막힌 지점에서 바로 도움말을 줍니다.',
   '가치·태도': '한 번의 모습으로 가르지 않고, 여러 차시에 걸쳐 달라진 점을 적어 둡니다.',
 };
+/* 정보공시 표의 '평가 방법' 칸은 도구 이름으로 짧게 적는다. */
+const TOOLNAME={
+  '지필평가(선택형·단답형)':'지필 평가', '지필평가(서술형)':'서술형 평가',
+  '구술·질의응답':'구술 평가', '수행평가(관찰)':'관찰 기록',
+  '수행평가(프로젝트·산출물)':'산출물 평가', '서·논술형':'서·논술형 평가',
+  '관찰평가(체크리스트)':'관찰 체크리스트', '자기평가·동료평가':'자기·동료 평가',
+  '포트폴리오':'포트폴리오'};
+const TOOLBYSUBJ={'과학':'탐구 보고서','체육':'실기 평가','음악':'실기 평가','미술':'작품·감상문',
+  '실과':'실습 결과물','수학':'문제 해결 과정 관찰'};
+function toolName(r, m){
+  if(m==='수행평가(실험·실습·실기)') return TOOLBYSUBJ[r.subj] || '실습 평가';
+  return TOOLNAME[m] || m;
+}
+/* 성취기준이 무엇을 하라고 하는지에 따라 평가 방법의 차례가 달라져야 한다.
+   '설명한다'를 선택형으로 재는 것은 맞지 않는다. */
+const VERBWAY=[
+  [/실험|관찰하고|관찰하여|측정하여|측정하고/,                       '수행평가(실험·실습·실기)'],
+  [/연주|노래를|공연|동작을|경기|운동을 하|실기|신체활동/,           '수행평가(실험·실습·실기)'],
+  [/조사하여|조사하고|탐구한다|탐구하고|자료를 수집|만들|제작|작품으로|산출물|글을 쓴다|글을 쓰고/,
+                                                                    '수행평가(프로젝트·산출물)'],
+  [/토의|토론|대화|발표|말하기|말한다|묻고 답하/,                    '구술·질의응답'],
+  [/설명할 수 있다|설명한다|설명하고|까닭을|근거를 들어/,             '지필평가(서술형)'],
+  [/실천|참여|태도를|기른다|가진다|지닌다|즐긴다|존중|배려|생활한다|습관/,
+                                                                    '관찰평가(체크리스트)'],
+];
+/* 서술어로 가려지지 않을 때 기대는 교과의 평소 평가 방식 */
+const SUBJDEFAULT={'체육':'수행평가(실험·실습·실기)','음악':'수행평가(실험·실습·실기)',
+  '미술':'수행평가(프로젝트·산출물)','실과':'수행평가(실험·실습·실기)',
+  '바른 생활':'관찰평가(체크리스트)','즐거운 생활':'수행평가(관찰)'};
 function evalDraft(r){
   if(r._eval) return r._eval;
   const p = catProfile(r), order = CATS.map((c,i)=>[c,p[i]]).sort((a,b)=>b[1]-a[1]);
@@ -1085,6 +1213,24 @@ function evalDraft(r){
   const cut = t => (t||'').replace(/\s+/g,' ').trim();
   const rubric = [['A', cut(r.A)], ['B', cut(r.B)], ['C', cut(r.C)]].filter(x=>x[1]);
 
+  /* 서술어가 가리키는 방법을 앞으로 끌어온다 */
+  const hintText = r.t + ' ' + (r.hae||'');
+  const wanted=[];
+  VERBWAY.forEach(v=>{ if(v[0].test(hintText) && wanted.indexOf(v[1])<0) wanted.push(v[1]); });
+  if(!wanted.length && SUBJDEFAULT[r.subj]) wanted.push(SUBJDEFAULT[r.subj]);
+  // 과학은 탐구가 바탕이라 탐구 보고서를 늘 후보에 둔다
+  if(r.subj==='과학' && wanted.indexOf('수행평가(실험·실습·실기)')<0)
+    wanted.push('수행평가(실험·실습·실기)');
+  if(wanted.length){
+    const pool={};
+    CATS.forEach(c2=>(EVALWAY[c2]||[]).forEach(w=>{ pool[w[0]]={m:w[0],why:w[1],cat:c2}; }));
+    wanted.slice(0,2).reverse().forEach(m=>{
+      const i=ways.findIndex(w=>w.m===m);
+      if(i>=0) ways.unshift(ways.splice(i,1)[0]);
+      else if(pool[m]) ways.unshift(pool[m]);
+    });
+    while(ways.length>4) ways.pop();
+  }
   const samples = (window.__EVAL && window.__EVAL[r.c]) || [];
   return r._eval = {ways:ways, elements: el.map(e=>e.t), elementRows: el,
     thin: el.length<2,
@@ -1146,16 +1292,37 @@ function render(){
   renderAreaChips();
   document.querySelectorAll('#fBand .chip').forEach((b,i)=>b.classList.toggle('on',S.bands.has(i)));
   document.querySelectorAll('#fSubj .chip').forEach((b,i)=>b.classList.toggle('on',S.subjs.has(i)));
-  const rows=filtered(), raw=S.q.trim(), terms=HILITE;
+  let rows=filtered(); const raw=S.q.trim(); const terms=HILITE;
+  const narrowed = raw && (S.bands.size||S.subjs.size||S.areas.size);
+  let outside = 0, widened = false;
+  if(narrowed){
+    const all = searchAllScope();
+    outside = all.length - rows.length;
+    if(!rows.length && all.length){ rows = all; widened = true; }   // 범위 안에 없으면 넓혀서 보여 준다
+  }
   $('#cnt').textContent=rows.length+'건';
-  $('#scope').textContent=raw?`“${raw}” 결과`:(S.areas.size?'선택한 영역':'전체 성취기준');
+  $('#scope').textContent=raw
+    ? (widened? `“${raw}” 결과 · 전체에서 찾음` : `“${raw}” 결과`)
+    : (S.areas.size?'선택한 영역':'전체 성취기준');
   $('#clr').hidden=!raw; $('#btnSort').hidden=!raw;
   $('#btnSort').textContent=S.sort==='rel'?'관련도 순':'학년군 순';
 
   const list=$('#list'); list.innerHTML='';
+  const wideNote=()=>{
+    if(!narrowed || (!outside && !widened)) return null;
+    const n=el('div','relaxnote');
+    n.innerHTML = widened
+      ? `고른 범위 안에는 “${raw}”가 없어 <b>전체에서</b> 찾았습니다.`
+      : `고른 범위 밖에 <b>${outside}건</b> 더 있습니다.`;
+    const b=el('button','btn','범위 지우고 전체에서 찾기');
+    b.onclick=()=>{ S.bands.clear(); S.subjs.clear(); S.areas.clear(); render(); };
+    n.appendChild(document.createTextNode(' ')); n.appendChild(b);
+    return n;
+  };
   if(!rows.length){ const e=el('div','empty');
-    e.innerHTML='찾는 성취기준이 없습니다.<br>낱말을 줄이거나 필터를 풀어 보세요.';
+    e.innerHTML='찾는 성취기준이 없습니다.<br>낱말을 줄여 보세요.';
     list.appendChild(e); renderDetail(); return; }
+  { const n=wideNote(); if(n) list.appendChild(n); }
   if(RELAX){ const n=el('div','relaxnote');
     n.innerHTML=`“${raw}”와 꼭 맞는 것이 없어 <b>${RELAX.join(' · ')}</b>가 들어간 성취기준을 찾았습니다.`;
     list.appendChild(n); }
@@ -1194,9 +1361,19 @@ function render(){
   if(!S.sel||!rows.includes(S.sel)) S.sel=rows[0];
   renderDetail(); updateCart();
 }
-function goto(o){ S.sel=o; S.map=null;
+let NAVHIST=[];
+function goto(o,opt){
+  opt=opt||{};
+  if(S.sel && S.sel!==o){ NAVHIST.push({r:S.sel, tab:S.tab}); if(NAVHIST.length>30) NAVHIST.shift(); }
+  S.sel=o; S.map=null;
+  if(opt.tab) S.tab=opt.tab;
   if(!filtered().includes(o)){ S.areas.clear(); S.subjs.clear(); S.bands.clear(); }
-  render(); $('#detailcol').scrollTop=0; }
+  render(); if(!opt.keepScroll) $('#detailcol').scrollTop=0; }
+function goBack(){
+  const h=NAVHIST.pop(); if(!h) return;
+  S.sel=h.r; S.tab=h.tab||S.tab; S.map=null;
+  if(!filtered().includes(h.r)){ S.areas.clear(); S.subjs.clear(); S.bands.clear(); }
+  render(); }
 
 /* ---------- 상세 ---------- */
 function secTitle(t,src){ const h=el('h4','sec',t); if(src) h.appendChild(el('span','src',src)); return h; }
@@ -1218,6 +1395,13 @@ function renderDetail(){
   const head=el('div','dhead');
   const back=el('button','btn backbtn','← 목록'); back.style.marginBottom='8px';
   back.onclick=()=>$('#detailcol').classList.remove('open'); head.appendChild(back);
+  if(NAVHIST.length){
+    const prev=NAVHIST[NAVHIST.length-1].r;
+    const bb=el('button','btn backbtn','↩ '+prev.c+' (으)로 돌아가기');
+    bb.style.marginBottom='8px'; bb.style.marginLeft='6px';
+    bb.title=prev.t;
+    bb.onclick=goBack; head.appendChild(bb);
+  }
   head.appendChild(el('div','dcode',r.c));
   const tags=el('div','dtags');
   [r.band,r.subj].forEach(t=>tags.appendChild(el('span','tag',t)));
@@ -1745,10 +1929,35 @@ function tick(M,steps){
 function paneMap(pane,r){
   if(!S.map||S.map.center!==r.c) S.map=buildMap(r);
   const M=S.map;
-  pane.appendChild(el('div','hint',
-    '가운데가 지금 보는 성취기준입니다. 동그라미(개념)를 누르면 그 개념을 함께 다루는 성취기준이 펼쳐지고, 네모(성취기준)를 누르면 그 성취기준으로 옮겨 갑니다. 배경을 끌면 이동, 휠은 확대·축소, 노드를 끌면 자리를 옮길 수 있습니다.'));
+  pane.appendChild(el('div','hint')).innerHTML=(
+    '가운데가 지금 보는 성취기준입니다. 동그라미(개념)를 누르면 그 개념을 함께 다루는 성취기준이 펼쳐집니다. 네모(성취기준)를 누르면 <b>지도를 그대로 둔 채 내용을 먼저 보여 주고</b>, 옮겨 갈지는 그때 고르면 됩니다. 배경을 끌면 이동, 휠은 확대·축소, 노드를 끌면 자리를 옮길 수 있습니다.');
 
   const wrap=el('div','mapwrap');
+  /* 노드를 누르면 옮겨 가기 전에 먼저 내용을 보여 준다.
+     지도를 벗어나지 않아야 여러 성취기준을 견주어 볼 수 있다. */
+  const card=el('div','peek'); card.hidden=true;
+  function peek(o){
+    card.innerHTML=''; card.hidden=false;
+    const x=el('button','peekx','✕'); x.onclick=()=>{ card.hidden=true; }; card.appendChild(x);
+    const tg=el('div','dtags');
+    [shortBand(o.band), o.subj, o.a].filter(Boolean).forEach(t=>tg.appendChild(el('span','tag',t)));
+    card.appendChild(tg);
+    card.appendChild(el('div','peekcode', o.c));
+    card.appendChild(el('div','peektext', o.t));
+    if(o.hae) card.appendChild(el('div','peekhae', o.hae.replace(/^\[[^\]]+\]\s*/,'').slice(0,160)
+      + (o.hae.length>170?'…':'')));
+    const kw=commonKw(r,o);
+    if(kw&&kw.length) card.appendChild(el('div','lenswhy','함께 걸리는 말: '+kw.slice(0,5).join(' · ')));
+    const act=el('div','dact');
+    const b1=el('button','btn on','이 성취기준 보기');
+    b1.onclick=()=>{ goto(o,{tab:'std'}); };
+    const b2=el('button','btn','이것을 가운데 두고 지도 보기');
+    b2.onclick=()=>{ goto(o,{tab:'map'}); };
+    const b3=el('button','btn', S.cart.has(o.c)?'바구니에 있음':'수업 바구니');
+    b3.onclick=()=>{ S.cart.add(o.c); saveCart(); b3.textContent='바구니에 있음'; updateCart(); };
+    act.appendChild(b1); act.appendChild(b2); act.appendChild(b3);
+    card.appendChild(act);
+  }
   const bar=el('div','mapbar');
   [['bandCross','같은 학년군·다른 교과'],['band','같은 학년군'],['subject','같은 교과'],['all','전체']]
     .forEach(([k,l])=>{ const b=el('button','btn sm'+(MAPCFG.scope===k?' on':''),l);
@@ -1772,6 +1981,7 @@ function paneMap(pane,r){
   const gRoot=svgEl('g');
   svg.appendChild(gRoot);
   wrap.appendChild(svg);
+  wrap.appendChild(card);
   pane.appendChild(wrap);
 
   const lg=el('div','legend');
@@ -1841,7 +2051,8 @@ function paneMap(pane,r){
       const n=drag.n;
       if(!drag.moved){
         if(n.type==='con'){ expandConcept(M,n.key); tick(M,220); draw(); }
-        else if(n.ref&&!n.center){ goto(n.ref); return; }
+        else if(n.ref&&!n.center){ peek(n.ref); n.fx=null; n.fy=null; drag=null; panning=null;
+          svg.classList.remove('drag'); return; }
       }
       n.fx=null; n.fy=null; drag=null;
     }
@@ -1960,12 +2171,26 @@ function mdOf(rows){
   return L.join('\n');
 }
 function planCSV(rows){
-  const head=['시기','학년군','교과','성취기준코드','성취기준','평가 영역','단원명(교수·학습 내용)',
-    '평가 요소','평가 방법','평가 횟수','성취수준 A','성취수준 B','성취수준 C'];
-  const body=rows.map(r=>{ const td=teachDraft(r), ed=evalDraft(r);
-    return ['', r.band, r.subj, r.c, r.t, ed.area, td.summary, ed.elements.join(' / '),
-      ed.ways.map(x=>x.m).slice(0,2).join(', '), ed.count, r.A, r.B, r.C].map(csvEsc).join(','); });
-  return '﻿'+[head.join(','),...body].join('\r\n');
+  /* 정보공시 평가 계획 표 그대로: 한 성취기준을 성취수준 세 줄로 편다.
+     앞 칸은 첫 줄에만 채워, 엑셀에서 셀을 합치면 원래 표 모양이 된다. */
+  const head=['성취기준','단원명(교수학습 내용)','평가 영역','평가 요소','평가 방법',
+              '성취 수준','성취 수준 내용'];
+  const GRADE=[['잘함','A'],['보통','B'],['노력 요함','C']];
+  const out=[head.join(',')];
+  rows.forEach(r=>{
+    const td=teachDraft(r), ed=evalDraft(r);
+    const unit=(r.a||ed.area||'').trim();
+    const cell = unit ? unit + String.fromCharCode(10) + '(' + td.summary + ')' : td.summary;
+    const std = r.c + ' ' + r.t;
+    const elem = ed.elements[0] || toActivity(r.t);
+    const way = ed.ways.length? toolName(r, ed.ways[0].m) : '';
+    GRADE.forEach((g,i)=>{
+      out.push([ i===0? std:'', i===0? cell:'', i===0? ed.area:'',
+                 i===0? elem:'', i===0? way:'', g[0], r[g[1]]||'' ].map(csvEsc).join(','));
+    });
+  });
+  return String.fromCharCode(0xFEFF)+out.join(String.fromCharCode(13)+String.fromCharCode(10));
+
 }
 const csvEsc=v=>{ v=(v==null?'':String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
 function toCSV(rows){

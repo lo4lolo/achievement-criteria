@@ -179,6 +179,15 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
   .printarea{display:block!important}
 }
 .printarea{display:none}
+
+.step{margin:6px 0}
+.stephd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.stept{font-weight:700}
+.pill.mark{background:#111;color:#fff;border-color:#111}
+.sub2{font-size:12.5px;color:var(--dim);margin:2px 0 8px}
+.rub{display:flex;gap:7px;align-items:flex-start;margin:4px 0;line-height:1.55}
+.rub .pill{flex:none;margin-top:2px}
+.lenswhy{font-size:12px;color:var(--dim);margin-top:3px}
 </style>
 </head>
 <body>
@@ -336,6 +345,10 @@ function contentOf(r){
    조사를 단서로 이름씨만 뽑고, 관형어(중요한)와 용언 어간(일어난·고려하)은 버린다. */
 const JOSA_N = /([가-힣]{2,8})(으로써|으로서|이라는|에서의|에게서|이나|에게|에서|으로|보다|처럼|과의|와의|을|를|이|가|은|는|의|에|와|과|로|도)(?=[\s,.]|$)/g;
 const STEM_N = /[하되지나오우거려]$/;
+/* 개념으로 삼을 수 없는 두루뭉술한 말 */
+/* 개념 목록에는 남기되, 일반화 문장의 짝으로는 쓰지 않는 말 */
+const ABSTRACT = /^(의미|뜻|특징|특성|유형|종류|조건|기준|역할|성질|상태|형태|모양|생김새|원리|개념|요소|대상|방법|과정|결과|위치|기능|쓰임|구조|모형|기법|주법|표현|감상|이해|활용|적용|분류|비교|관찰|조사|탐구|설명|파악|확인|점검|조정|생성|추론|해석|수집|계산|측정|실천|참여|변화|관계|영향|정의|종류별|사례|자료|정보|내용별)$/;
+const NOTCON = /^(내용|것|때|수|방법|활동|생각|사람|우리|자신|여러|다양|이해|사용|관련|필요|중요|모습|경우|이것|저것|여기|거기|정도|하나|가지|자기|서로|모두|다른|같은|위해|통해|바탕|중심|이상|이하|이때|무엇|어떤|여러 가지|점|일|말|글|것들|친구|선생|학교|공부|학습|수업|시간|장소)$/;
 const ACTION_N = /^(파악|확인|조직|활용|표현|비교|분석|조사|관찰|이해|감상|정리|구성|점검|조정|선별|재구성|생성|추론|평가|해석|적용|탐색|탐구|설명|제시|수집|계산|측정|분류|실천|참여)$/;
 function nounsOf(text){
   const out=[]; const re=new RegExp(JOSA_N.source,'g'); let m;
@@ -343,6 +356,8 @@ function nounsOf(text){
     let w=m[1].replace(/들$/,'').replace(/적$/,'');
     if(w.length<2) continue;
     if(w.length<=5 && STEM_N.test(w)) continue;
+    if(NOTCON.test(w)) continue;
+    if(/(으|인가|는가|ㄴ가)$/.test(w)) continue;
     if(!out.includes(w)) out.push(w);
   }
   return out;
@@ -357,7 +372,7 @@ function conceptOfElement(x, whole){
   let w=s.split(/\s+/);
   if(w.length>1 && ACTION_N.test(w[w.length-1])) w=w.slice(0,-1);
   let c=(w[w.length-1]||'').replace(/(으로|로|에|을|를|이|가|은|는|의|와|과)$/,'');
-  if(c.length<2 || (c.length<=5 && STEM_N.test(c))) return null;
+  if(c.length<2 || (c.length<=5 && STEM_N.test(c)) || NOTCON.test(c)) return null;
   return c.length<=12 ? c : null;
 }
 /* 내용 요소가 이 성취기준과 실제로 맞물리는지 (헛겹침을 막으려 3글자 이상으로 본다) */
@@ -373,7 +388,7 @@ function conceptsOf(r,k){
   if(!r._con){
     const ct=contentOf(r)||{};
     const out=[];
-    const push=x=>{ if(!x||x.length<2) return;
+    const push=x=>{ if(!x||x.length<2||NOTCON.test(x)) return;
       if(out.some(o=>o===x||o.includes(x)||x.includes(o))) return;
       out.push(x); };
     // 성취기준이 먼저다. 내용 요소는 성취기준과 낱말이 겹칠 때만 보탠다.
@@ -427,12 +442,17 @@ const mainCat = r => CATS[catProfile(r).indexOf(Math.max(...catProfile(r)))];
 
 /* ============================================================
    개념 기반 탐구 초안 (AI 생성 — 반드시 교사 검토)
+   Erickson·French의 얼개를 따른다.
+   · 개념       : 옮겨 쓸 수 있는 이름씨
+   · 개념적 렌즈 : 단원 전체를 꿰뚫어 보게 하는 큰 개념
+   · 일반화     : 개념과 개념의 관계를 현재형으로 진술한 문장
+   · 탐구 질문   : 사실적(닫힌) → 개념적(옮겨 쓰는) → 논쟁적(따져 보는)
    ============================================================ */
 /* 받침에 따라 조사를 고른다 */
 function jong(w){ if(!w) return false; const c=w.charCodeAt(w.length-1);
   if(c<0xAC00||c>0xD7A3) return /[013678lmnprt]$/i.test(w); return ((c-0xAC00)%28)!==0; }
 function J(w,a,b){
-  w=w||'';
+  w=(w||'').trim();
   if((a==='으로'&&b==='로')||(a==='로'&&b==='으로')){
     const c=w.charCodeAt(w.length-1);
     const jc=(c>=0xAC00&&c<=0xD7A3)?((c-0xAC00)%28):0;
@@ -444,55 +464,111 @@ function J(w,a,b){
 function usable(x){
   if(!x) return false;
   const w=x.trim().split(/\s+/);
-  return x.length>=4 && x.length<=28 && !/^[-–—\s]*$/.test(x) && w[w.length-1].length>=2;
+  return x.length>=4 && x.length<=34 && !/^[-–—\s]*$/.test(x) && w[w.length-1].length>=2;
 }
+/* 내용 요소를 문장 속에 넣기 좋게 다듬는다 */
+function elemNoun(x){
+  return (x||'').replace(/\s*하기$/,'하는 일').trim();
+}
+/* 내용 요소를 '~하기' 활동 이름으로 (이미 그런 꼴이면 그대로) */
+const elemAct = x => /하기$|기$/.test((x||'').trim()) ? (x||'').trim() : toActivity(x);
+
 const LENSES=[
   {n:'변화', re:/변화|달라지|바뀌|성장|발달|흐름|시대|과거|미래|계절|순환|한살이|자라/,
-   gen:a=>`${J(a,'은','는')} 시간과 조건에 따라 달라지며, 그 달라짐에는 일정한 흐름과 까닭이 있다.`,
-   rel:'달라지는 흐름',
-   deb:a=>`${J(a,'의','의')} 변화는 언제나 바람직한 방향으로 일어나는가?`},
-  {n:'관계', re:/관계|영향|상호|연결|연계|더불어|함께|사이|의존|균형|어우러/,
-   gen:(a,b)=>`${J(a,'과','와')} ${J(b||'둘레의 환경','은','는')} 서로 맞물려 있어, 하나가 달라지면 다른 하나도 달라진다.`,
-   rel:'서로 주고받는 영향',
-   deb:a=>`${J(a,'에','에')} 가장 크게 영향을 주는 것은 무엇일까?`},
-  {n:'원인과 결과', re:/원인|결과|까닭|때문|영향을 미치|일어나|발생|왜/,
-   gen:a=>`${a}에는 그렇게 되는 까닭이 있으며, 까닭을 알면 다음에 올 일을 짐작하고 대비할 수 있다.`,
-   rel:'까닭과 결과',
-   deb:a=>`${J(a,'의','의')} 결과에 대한 책임은 누구에게 있을까?`},
-  {n:'체계와 구조', re:/체계|구조|구성|조직|기관|계통|질서|짜임|순서|절차|단계/,
-   gen:a=>`${J(a,'은','는')} 여러 부분이 짜임새를 이루고 있으며, 각 부분은 제 몫을 하며 전체를 이룬다.`,
-   rel:'부분과 전체의 짜임',
-   deb:a=>`${J(a,'의','의')} 짜임 가운데 무엇이 가장 중요할까?`},
-  {n:'형태와 기능', re:/모양|형태|생김새|특징|기능|쓰임|용도|성질|분류|도구/,
-   gen:a=>`${J(a,'의','의')} 생김새와 성질은 그것이 하는 일과 맞닿아 있다.`,
-   rel:'생김새와 하는 일',
-   deb:a=>`${J(a,'을','를')} 나누는 기준은 하나로 정해질 수 있을까?`},
-  {n:'패턴과 규칙', re:/규칙|패턴|반복|배열|계열|일정한|예측|법칙|계산|수의/,
-   gen:a=>`${a}에는 되풀이되는 규칙이 있어, 규칙을 찾으면 다음을 짐작하고 문제를 풀 수 있다.`,
-   rel:'되풀이되는 규칙',
-   deb:a=>`${J(a,'의','의')} 규칙은 언제나 들어맞을까?`},
-  {n:'관점', re:/관점|입장|생각|의견|해석|다양성|편견|존중|차이|서로 다른/,
-   gen:a=>`같은 ${a}도 보는 사람의 자리와 겪은 일에 따라 다르게 읽힌다.`,
-   rel:'보는 자리에 따른 차이',
-   deb:a=>`${a}에 대한 서로 다른 생각 가운데 무엇이 더 그럴듯할까?`},
-  {n:'소통', re:/듣고|말하|대화|의사소통|발표|토의|토론|매체|전달|나누며|주고받/,
-   gen:(a,b)=>`${J(a,'은','는')} 상황과 듣는 이에 따라 달라지며, 알맞게 주고받을 때 뜻이 온전히 전해진다.`,
-   rel:'상황에 따른 주고받음',
-   deb:a=>`${a}에서 가장 지켜야 할 약속은 무엇일까?`},
-  {n:'표현', re:/표현|창작|감상|작품|노래|연주|그리|만들|상상|아름다움|꾸미/,
-   gen:a=>`생각과 느낌은 ${J(a,'을','를')} 통해 드러나며, 어떻게 표현하느냐가 곧 뜻의 한 부분이 된다.`,
-   rel:'드러내는 방법과 뜻',
-   deb:a=>`좋은 ${a}이란 무엇으로 가릴 수 있을까?`},
-  {n:'책임과 실천', re:/실천|참여|태도|노력|지속가능|보호|안전|권리|배려|봉사|시민|지키/,
-   gen:a=>`${J(a,'을','를')} 아는 데서 그치지 않고 생활 속에서 실천할 때 비로소 뜻을 갖는다.`,
-   rel:'앎과 실천의 이음',
-   deb:a=>`${J(a,'을','를')} 위해 우리가 지금 할 수 있는 일은 무엇일까?`},
+   B:'시간', altB:'지나온 흐름',
+   gen:[(a,b)=>J(a,'은','는')+' '+J(b,'에','에')+' 따라 달라지며, 그 달라짐에는 일정한 흐름과 까닭이 있다.',
+        (a,b)=>J(a,'의','의')+' 달라진 모습을 견주어 보면 다음에 올 모습을 짐작할 수 있다.'],
+   cq:[(a,b)=>J(a,'은','는')+' 왜 그대로 있지 않고 달라지는가?',
+       (a,b)=>J(a,'의','의')+' 달라짐에는 어떤 흐름이 있는가?'],
+   dq:[(a,ar)=>J(a,'의','의')+' 변화는 언제나 나아지는 쪽으로 일어나는가?']},
+
+  {n:'관계', re:/관계|영향|상호|연결|연계|더불어|함께|사이|의존|균형|어우러|주고받/,
+   B:'둘레의 환경', altB:'서로 이어진 것',
+   gen:[(a,b)=>J(a,'과','와')+' '+J(b,'은','는')+' 서로 맞물려 있어, 하나가 달라지면 다른 하나도 달라진다.',
+        (a,b)=>J(a,'과','와')+' '+J(b,'의','의')+' 관계를 알면 하나만 볼 때는 보이지 않던 것이 보인다.'],
+   cq:[(a,b)=>J(a,'이','가')+' 달라지면 '+J(b,'은','는')+' 어떻게 달라지는가?',
+       (a,b)=>J(a,'과','와')+' '+J(b,'은','는')+' 어떻게 서로 이어져 있는가?'],
+   dq:[(a,ar)=>J(a,'에','에')+' 가장 크게 영향을 주는 것은 무엇인가?']},
+
+  {n:'원인과 결과', re:/원인|결과|까닭|때문|영향을 미치|발생/,
+   B:'결과', altB:'뒤따르는 일',
+   gen:[(a,b)=>J(a,'에는','에는')+' 그렇게 되는 까닭이 있으며, 까닭을 알면 '+J(b,'을','를')+' 짐작하고 대비할 수 있다.',
+        (a,b)=>'같은 까닭이라도 조건이 달라지면 '+J(b,'은','는')+' 다르게 나타난다.'],
+   cq:[(a,b)=>J(a,'은','는')+' 어떤 까닭으로 일어나는가?',
+       (a,b)=>'까닭을 알면 '+J(b,'을','를')+' 어떻게 달리할 수 있는가?'],
+   dq:[(a,ar)=>J(a,'의','의')+' 결과에 대한 책임은 누구에게 있는가?']},
+
+  {n:'체계와 구조', re:/체계|구조|구성|조직|기관|계통|질서|짜임|순서|절차|단계|차례/,
+   B:'전체', altB:'짜임새',
+   gen:[(a,b)=>J(a,'은','는')+' 여러 부분이 짜임새를 이루고 있으며, 각 부분은 제 몫을 하며 '+J(b,'을','를')+' 이룬다.',
+        (a,b)=>'부분이 놓이는 자리와 차례가 달라지면 '+J(b,'의','의')+' 모습도 달라진다.'],
+   cq:[(a,b)=>J(a,'의','의')+' 각 부분은 왜 그렇게 짜여 있는가?',
+       (a,b)=>'한 부분이 빠지면 '+J(b,'에','에')+' 무슨 일이 일어나는가?'],
+   dq:[(a,ar)=>J(a,'의','의')+' 짜임 가운데 무엇이 가장 중요한가?']},
+
+  {n:'형태와 기능', re:/모양|생김새|기능|쓰임|용도|분류|도구|만드는 방법/,
+   B:'하는 일', altB:'쓰임새', fixB:true,
+   gen:[(a,b)=>J(a,'의','의')+' 생김새와 성질은 '+J(b,'과','와')+' 맞닿아 있다.',
+        (a,b)=>J(b,'이','가')+' 달라지면 그에 맞게 '+J(a,'의','의')+' 생김새도 달라진다.'],
+   cq:[(a,b)=>J(a,'의','의')+' 생김새는 '+J(b,'과','와')+' 어떻게 이어지는가?',
+       (a,b)=>J(a,'이','가')+' 그런 생김새를 갖게 된 까닭은 무엇인가?'],
+   dq:[(a,ar)=>J(a,'의','의')+' 생김새가 지금과 달랐다면 무엇이 달라졌을까?']},
+
+  {n:'패턴과 규칙', re:/규칙|패턴|반복|배열|계열|일정한|예측|법칙|어림/,
+   B:'다음에 올 것', altB:'새로운 경우', fixB:true,
+   gen:[(a,b)=>J(a,'에는','에는')+' 되풀이되는 규칙이 있어, 규칙을 찾으면 '+J(b,'을','를')+' 짐작할 수 있다.',
+        (a,b)=>'규칙을 말이나 식으로 나타내면 새로운 경우에도 그대로 쓸 수 있다.'],
+   cq:[(a,b)=>a+'에서 되풀이되는 규칙은 무엇인가?',
+       (a,b)=>'찾은 규칙은 다른 경우에도 그대로 들어맞는가?'],
+   dq:[(a,ar)=>J(a,'의','의')+' 규칙은 언제나 들어맞는가?']},
+
+  {n:'관점', re:/관점|입장|의견|해석|다양성|편견|존중|차이|서로 다른|까닭을 들어/,
+   B:'겪은 일', altB:'서로 다른 자리',
+   gen:[(a,b)=>'같은 '+a+'도 보는 사람의 자리와 '+J(b,'에','에')+' 따라 다르게 읽힌다.',
+        (a,b)=>'서로 다르게 보는 까닭을 알면 나와 다른 생각도 헤아릴 수 있다.'],
+   cq:[(a,b)=>'같은 '+J(a,'을','를')+' 사람마다 다르게 보는 까닭은 무엇인가?',
+       (a,b)=>'어떤 근거가 있을 때 그 생각을 받아들일 만한가?'],
+   dq:[(a,ar)=>a+'에 대한 서로 다른 생각 가운데 무엇이 더 그럴듯한가?']},
+
+  {n:'소통', re:/듣고|말하|대화|의사소통|발표|토의|토론|매체|전달|나누며|주고받|묻고/,
+   B:'상황', altB:'듣는 이',
+   gen:[(a,b)=>J(a,'과','와')+' '+J(b,'을','를')+' 함께 헤아려 주고받을 때 뜻이 온전히 전해진다.',
+        (a,b)=>'같은 말이라도 '+J(b,'에','에')+' 따라 다르게 받아들여진다.'],
+   cq:[(a,b)=>J(a,'은','는')+' '+J(b,'에','에')+' 따라 어떻게 달라지는가?',
+       (a,b)=>'뜻이 잘 전해지지 않을 때 무엇을 고쳐야 하는가?'],
+   dq:[(a,ar)=>(ar||a)+'에서 가장 지켜야 할 약속은 무엇인가?']},
+
+  {n:'표현', re:/표현|창작|감상|작품|노래|연주|그리|만들|상상|아름다움|꾸미|나타내/,
+   B:'생각과 느낌', altB:'나타내는 방법', fixB:true,
+   gen:[(a,b)=>J(b,'은','는')+' '+J(a,'을','를')+' 통해 드러나며, 어떻게 나타내느냐가 곧 뜻의 한 부분이 된다.',
+        (a,b)=>'같은 '+b+'도 나타내는 방법을 달리하면 받는 느낌이 달라진다.'],
+   cq:[(a,b)=>J(a,'을','를')+' 달리하면 '+J(b,'은','는')+' 어떻게 달라지는가?',
+       (a,b)=>'무엇을 보고 그 '+b+'을 읽어 낼 수 있는가?'],
+   dq:[(a,ar)=>'좋은 '+J(ar||a,'이란','란')+' 무엇으로 가릴 수 있는가?']},
+
+  {n:'책임과 실천', re:/실천|참여|태도|노력|지속가능|보호|안전|권리|배려|봉사|시민|지키|아끼|돌보/,
+   B:'생활', altB:'날마다의 삶',
+   gen:[(a,b)=>J(a,'을','를')+' 아는 데서 그치지 않고 '+J(b,'에서','에서')+' 실천할 때 비로소 뜻을 갖는다.',
+        (a,b)=>'작은 실천이 쌓이면 나와 둘레의 '+J(b,'이','가')+' 달라진다.'],
+   cq:[(a,b)=>J(a,'은','는')+' 왜 지켜야 하는가?',
+       (a,b)=>J(a,'을','를')+' 실천하기 어려운 까닭은 무엇인가?'],
+   dq:[(a,ar)=>(ar||a)+'에서 우리가 지금 실천할 수 있는 일은 무엇인가?']},
 ];
+/* 교과가 즐겨 쓰는 렌즈 — 성취기준에 단서가 약할 때 기댄다 */
+const SUBJLENS={'국어':'소통','수학':'패턴과 규칙','사회':'관계','과학':'체계와 구조','도덕':'책임과 실천',
+  '체육':'형태와 기능','음악':'표현','미술':'표현','영어':'소통','실과':'형태와 기능',
+  '바른 생활':'책임과 실천','슬기로운 생활':'형태와 기능','즐거운 생활':'표현'};
 function lensOf(r){
   if(r._lens) return r._lens;
-  const t=r.t+' '+(r.hae||'')+' '+((contentOf(r)||{})['과정·기능']||[]).join(' ');
-  let best=LENSES[1], bs=0;
-  for(const L of LENSES){ const m=t.match(L.re); const sc=m?m.length:0; if(sc>bs){ best=L; bs=sc; } }
+  const ct=contentOf(r)||{};
+  const w=[[r.t,3],[r.hae||'',1],[(ct['과정·기능']||[]).join(' '),1],[(ct['가치·태도']||[]).join(' '),1]];
+  let best=null, bs=0;
+  for(const L of LENSES){
+    let sc=0;
+    w.forEach(p=>{ const m=(p[0]||'').match(L.re); if(m) sc+=m.length*p[1]; });
+    if(sc>bs){ best=L; bs=sc; }
+  }
+  if(!best) best=LENSES.find(L=>L.n===(SUBJLENS[r.subj]||'관계'))||LENSES[1];
   return r._lens=best;
 }
 /* 영속적 이해: 그 영역의 핵심 아이디어 가운데 이 성취기준과 가장 가까운 원문 문장 */
@@ -503,40 +579,65 @@ function enduringOf(r){
   d.idea.forEach(x=>{ const s=cos(r._v, vecOfText(x)); if(s>bs){ bs=s; best=x; } });
   return {text:best, all:d.idea, domain:d.name};
 }
+/* 일반화에 쓸 개념 짝을 고른다.
+   A는 될 수 있으면 실체를 가리키는 말, B는 A와 겹치지 않는 다른 개념. */
+function pickPair(cons, L, fallback){
+  const solid = cons.filter(x=>!ABSTRACT.test(x));
+  const A = solid[0] || cons[0] || fallback;
+  const clash=(x,y)=>!x||!y||x===y||x.includes(y)||y.includes(x);
+  let B = '';
+  if(!L.fixB) B = solid.find(x=>!clash(x,A)) || '';
+  if(!B) B = clash(L.B,A) ? (L.altB||L.B) : L.B;
+  // 그래도 겹치면 A 쪽을 다른 개념으로 바꾼다
+  if(clash(A,B)){
+    const A2 = solid.find(x=>!clash(x,B)) || cons.find(x=>!clash(x,B));
+    if(A2) return [A2, B];
+  }
+  return [A, B];
+}
 function cbi(r){
   if(r._cbi) return r._cbi;
   const cons=conceptsOf(r,5);
   const L=lensOf(r);
-  const A=cons[0]||areaKeyOf(r), B=cons[1]||'';
   const ct=contentOf(r)||{};
   const own=r.t+' '+(r.hae||'');
-  const pick=list=>{ const L=(list||[]).filter(usable);
-    return L.filter(x=>relatedTo(x,own)).concat(L.filter(x=>!relatedTo(x,own))); };
-  const knowAll=pick(ct['지식·이해']), skillAll=pick(ct['과정·기능']), valAll=pick(ct['가치·태도']);
-  const know=knowAll.filter(x=>relatedTo(x,own));
-  const skill=skillAll.filter(x=>relatedTo(x,own));
-  const val=valAll.filter(x=>relatedTo(x,own));
+  const pick=list=>(list||[]).filter(usable).filter(x=>relatedTo(x,own));
+  const know=pick(ct['지식·이해']), skill=pick(ct['과정·기능']), val=pick(ct['가치·태도']);
+  const knowAll=(ct['지식·이해']||[]).filter(usable);
   const act=lessonTitle(r);
-  const actQ=act;
-  // 문장에는 단원명을 쓴다. 자동 연결된 영역보다 성취기준에 가깝다.
   let area=r.a || areaKeyOf(r);
   if(/[?？]$|까$/.test(area)) area='이 단원';
+  const pr=pickPair(cons, L, areaKeyOf(r)), A=pr[0], B=pr[1];
 
-  const gen=[L.gen(A,B)];
-  if(B) gen.push(`${J(A,'과','와')} ${J(B,'은','는')} ${J(L.rel,'으로','로')} 이어져 있어, `
-               + `함께 살필 때 ${J(area,'을','를')} 더 깊이 이해할 수 있다.`);
+  /* 일반화 — 개념과 개념의 관계를 현재형으로 */
+  const gen=[L.gen[0](A,B), L.gen[1](A,B)];
+  if(val.length) gen.push(J(elemNoun(val[0]),'은','는')
+      + (area.length<=10 ? ' '+J(area,'을','를')+' 배우는 내내' : ' 이 배움 내내') + ' 길러진다.');
 
-  const q={
-    fact:[ `${J(A,'은','는')} 무엇인가?`,
-           know.length? `${know[0]}에는 어떤 것들이 있는가?` : `${actQ} 위해 무엇을 먼저 알아야 하는가?` ],
-    conc:[ B? `${J(A,'과','와')} ${J(B,'은','는')} 어떻게 이어져 있는가?`
-             : `${J(A,'을','를')} 알면 ${area}에서 무엇이 달라지는가?`,
-           skill.length? `${skill[0]} 위해서는 무엇을 살펴야 하는가?`
-                       : `${J(A,'을','를')} 알면 ${area}에서 무엇이 달라지는가?` ],
-    deb:[ L.deb(A),
-          val.length? `${J(val[0],'은','는')} 왜 필요한가?` : `${area}에서 ${J(A,'은','는')} 얼마나 중요한가?` ],
-  };
-  return r._cbi={lens:L.n, concepts:cons, gen, q, enduring:enduringOf(r), content:ct, activity:act};
+  /* 탐구 질문 */
+  const fact=[J(A,'은','는')+' 무엇인가?'];
+  const k0=know[0]||knowAll[0];
+  if(k0) fact.push(/[?？]$/.test(k0) ? '“'+k0+'”' 
+                                     : J(elemNoun(k0),'에는','에는')+' 어떤 것들이 있는가?');
+  const k1=know[1]||knowAll[1];
+  if(B && B!==A && cons.indexOf(B)>=0) fact.push(J(B,'은','는')+' 무엇인가?');
+  else if(k1 && !/[?？]$/.test(k1)) fact.push(J(elemNoun(k1),'은','는')+' 어떠한가?');
+  else fact.push(J(A,'은','는')+' 어디에서 찾아볼 수 있는가?');
+
+  const conc=[L.cq[0](A,B), L.cq[1](A,B)];
+  if(skill.length) conc.push(elemAct(skill[0])+' 활동에서는 무엇을 눈여겨보아야 하는가?');
+
+  const deb=[L.dq[0](A, area)];
+  if(val.length) deb.push(J(elemNoun(val[0]),'은','는')+' 왜 필요한가?');
+  else deb.push(area+'에서 '+J(A,'은','는')+' 얼마나 중요한가?');
+
+  const tidy=x=>(x||'').replace(/\s+/g,' ').replace(/\s+([,.?!])/g,'$1').trim();
+  [gen,fact,conc,deb].forEach(arr=>{ for(let i=0;i<arr.length;i++) arr[i]=tidy(arr[i]); });
+  const hit=(r.t.match(L.re)||[])[0];
+  return r._cbi={lens:L.n,
+    lensWhy: hit? "성취기준의 '"+hit+"'에 기대어 골랐습니다" : r.subj+'과에서 자주 쓰이는 렌즈입니다',
+    concepts:cons, pair:[A,B], gen, q:{fact:fact, conc:conc, deb:deb},
+    enduring:enduringOf(r), content:ct, activity:act};
 }
 
 /* ---------- 연관 / 위계 ---------- */
@@ -603,7 +704,7 @@ let HILITE=[], RELAX=null;
 function filtered(){
   const raw=S.q.trim();
   const base=STD.filter(r=>
-    (!S.bands.size||S.bands.has(r.b)) && (!S.subjs.size||S.subjs.has(r.s)) && (!S.areas.size||S.areas.has(r.ak)));
+    (!S.bands.size||S.bands.has(r.b)) && (!S.subjs.size||S.subjs.has(r.s)) && (!S.areas.size||S.areas.has(r.subj+'|'+areaKeyOf(r))));
   HILITE=[]; RELAX=null;
   if(!raw) return base;
   if(isChoQuery(raw)){ const c=raw.replace(/\s+/g,''); return base.filter(r=>r._cho.includes(c)); }
@@ -732,35 +833,75 @@ function lessonActs(r){
   return acts.length? acts : [toActivity(t)];
 }
 
-/* 교수·학습 내용 초안: 성취기준 + 내용 요소 + 탐구 활동으로 흐름을 세운다 */
+/* 교수·학습 내용 초안: 성취기준을 차시 흐름으로 펼친다 (정보공시 서술용) */
+const STEPCAT=['지식·이해','지식·이해','과정·기능','과정·기능','과정·기능','가치·태도'];
 function teachDraft(r){
   if(r._teach) return r._teach;
   const ct = contentOf(r) || {};
   const own = r.t + ' ' + (r.hae || '');
   const rel = list => (list||[]).filter(usable).filter(x=>relatedTo(x, own));
-  const know = rel(ct['지식·이해']);
-  const skill= rel(ct['과정·기능']);
+  const all = list => (list||[]).filter(usable);
+  const know = rel(ct['지식·이해']).concat(all(ct['지식·이해']).filter(x=>!relatedTo(x,own)));
+  const skill= rel(ct['과정·기능']).concat(all(ct['과정·기능']).filter(x=>!relatedTo(x,own)));
   const val  = rel(ct['가치·태도']);
   const cons = conceptsOf(r,3);
-  const A = cons[0] || r.a;
-  const steps = [];
-  let topic = r.a || areaKeyOf(r);
-  if(/[?？]$|까$/.test(topic)) topic = conceptsOf(r,1)[0] || '오늘 배울 내용';
-  steps.push(['도입', `${J(topic,'과','와')} 관련된 경험 나누기, 학습 문제 확인하기`]);
-  if(know.length) steps.push(['전개 ①', `${know.slice(0,2).join(', ')} 알아보기`]);
-  else steps.push(['전개 ①', `${A}의 뜻과 특징 알아보기`]);
-  
-  if(r.q && r.q.length) steps.push(['전개 ②', r.q[0]]);
-  else if(skill.length) steps.push(['전개 ②', skill[0]]);
-  else steps.push(['전개 ②', toActivity(r.t)]);
-  if(r.q && r.q.length>1) steps.push(['전개 ③', r.q[1]]);
-  else if(skill.length>1) steps.push(['전개 ③', skill[1]]);
-  else steps.push(['전개 ③', '살펴본 내용을 모둠에서 나누고 정리하기']);
-  steps.push(['정리', val.length ? `${J(val[0],'을','를')} 되짚고 생활 속 실천 다짐하기`
-                                 : '배운 내용을 정리하고 생활에 적용할 점 찾기']);
+  const cb0 = cbi(r);
+  const A = cb0.pair[0] || cons[0] || r.a;
+  const B = cb0.pair[1] || '';
   const acts = lessonActs(r);
-  const summary = lessonTitle(r);   // 정보공시 칸: 화살표·줄임표 없이 한 문구
-  return r._teach = {steps, summary};
+  const summary = lessonTitle(r);          // 정보공시 칸: 화살표·줄임표 없이 한 문구
+  const inq = (r.q||[]).filter(x=>x&&x.length>3);
+  let topic = r.a || areaKeyOf(r);
+  if(/[?？]$|까$/.test(topic)) topic = cons[0] || '오늘 배울 내용';
+  const cb = cb0;
+
+  const S=[];
+  const add=(ph,t,d,cat,ev)=>S.push({ph:ph, t:t, d:d.filter(Boolean), cat:cat, ev:!!ev});
+
+  add('1차시','만나기 — 배움 문제 세우기',[
+    J(topic,'과','와')+' 관련된 경험을 떠올려 이야기 나누기',
+    '배움 문제 확인하기 — “'+summary+'”',
+    cb.q.fact[0]+' (사실적 질문으로 출발점 살피기)'
+  ],'지식·이해');
+
+  add('2차시','알아보기 — 바탕이 되는 앎 다지기',[
+    know[0]? elemNoun(know[0])+' 알아보기'
+           : J(A,'의','의')+' 뜻과 특징을 보기를 들어 알아보기',
+    know[1]? elemNoun(know[1])+' 살펴보고 정리하기'
+           : (B && cons.indexOf(B)>=0
+                ? J(B,'과','와')+' 견주어 보며 '+J(A,'을','를')+' 정리하기'
+                : J(A,'에','에')+' 대해 알게 된 것을 우리 말로 정리하기'),
+    r.hae? '교육과정 해설에 제시된 내용을 짚어 가며 확인하기' : null
+  ],'지식·이해');
+
+  add('3차시','탐구하기 ① — 직접 해 보기',[
+    acts[0] || summary,
+    skill[0]? elemAct(skill[0]) : '살펴본 것을 표나 그림으로 나타내기',
+    inq[0] || null
+  ],'과정·기능', true);
+
+  add('4차시','탐구하기 ② — 넓혀 가기',[
+    acts[1] || inq[1] || (skill[1]? elemAct(skill[1]) : '다른 사례에 같은 방법을 적용해 보기'),
+    skill[1] && acts[1]? elemAct(skill[1]) : '모둠별 결과를 견주어 같은 점과 다른 점 찾기',
+    cb.q.conc[0]+' (개념적 질문으로 생각 넓히기)'
+  ],'과정·기능', true);
+
+  add('5차시','나누기 — 생각을 견주고 다듬기',[
+    '모둠에서 알게 된 것을 발표하고 서로 묻고 답하기',
+    '친구 의견에 견주어 내 생각을 다듬어 다시 쓰기',
+    '“'+cb.gen[0].replace(/[.\s]+$/,'')+'”로 우리 말로 정리해 보기'
+  ],'과정·기능', true);
+
+  add('6차시','다지기 — 생활로 잇기',[
+    val[0]? elemNoun(val[0])+' 되짚기'
+          : J(A,'을','를')+' 배우며 느낀 점 나누기',
+    cb.q.deb[0]+' (논쟁적 질문으로 따져 보기)',
+    '배운 것을 생활에서 쓸 곳을 찾아 실천 계획 세우기'
+  ],'가치·태도');
+
+  return r._teach = {steps:S, summary:summary, acts:acts, topic:topic,
+    // 옛 화면이 쓰던 두 칸 짜리 흐름도 함께 둔다
+    brief:S.map(s=>[s.ph, s.d[0]])};
 }
 
 /* 평가 방법 추천 — 범주 성향과 서술어를 근거로 (원문 예시가 있으면 그쪽이 우선) */
@@ -782,21 +923,42 @@ const EVALWAY = {
     ['포트폴리오', '한 학기에 걸친 변화를 모아 볼 때'],
   ],
 };
+const FEEDBACK = {
+  '지식·이해': '틀린 까닭을 짚어 주고, 헷갈리는 개념은 보기를 바꾸어 다시 묻습니다.',
+  '과정·기능': '결과보다 하는 과정을 보고, 막힌 지점에서 바로 도움말을 줍니다.',
+  '가치·태도': '한 번의 모습으로 가르지 않고, 여러 차시에 걸쳐 달라진 점을 적어 둡니다.',
+};
 function evalDraft(r){
   if(r._eval) return r._eval;
   const p = catProfile(r), order = CATS.map((c,i)=>[c,p[i]]).sort((a,b)=>b[1]-a[1]);
   const ways = [];
-  order.forEach(([c,w],i)=>{ (EVALWAY[c]||[]).slice(0, i===0?2:1).forEach(([m,why])=>ways.push({m,why,cat:c})); });
+  order.forEach((o,i)=>{ (EVALWAY[o[0]]||[]).slice(0, i===0?2:1).forEach(w=>ways.push({m:w[0],why:w[1],cat:o[0]})); });
   const ct = contentOf(r) || {};
-  const el = [...((ct['과정·기능']||[]).filter(usable).slice(0,2)),
-              ...((ct['지식·이해']||[]).filter(usable).slice(0,1))];
-  const own = toActivity(r.t);
-  if(!el.some(x=>own.includes(x))) el.unshift(own);
+  const own = r.t + ' ' + (r.hae || '');
+  const rel = c => (ct[c]||[]).filter(usable).filter(x=>relatedTo(x,own));
+  const any = c => (ct[c]||[]).filter(usable);
+
+  /* 평가 요소 — 성취기준 자체를 첫 요소로, 범주마다 하나씩 보탠다 */
+  const el = [];
+  const put = (t,cat)=>{ t=(t||'').trim(); if(!t) return;
+    if(el.some(e=>e.t===t)) return; el.push({t:t, cat:cat}); };
+  put(toActivity(r.t), order[0][0]);
+  CATS.forEach(c=>{ const s=rel(c)[0]||any(c)[0]; if(s) put(elemAct(s), c); });
+  const sk = rel('과정·기능')[1]; if(sk) put(elemAct(sk), '과정·기능');
+  if(el.length<2) lessonActs(r).forEach(a=>{ if(el.length<3) put(a, order[0][0]); });
+  if(el.length<2 && (r.q||[]).length) put(r.q[0], order[0][0]);
+
+  /* 채점 관점 — 성취수준 원문에서 가르는 말을 뽑는다 */
+  const cut = t => (t||'').replace(/\s+/g,' ').trim();
+  const rubric = [['A', cut(r.A)], ['B', cut(r.B)], ['C', cut(r.C)]].filter(x=>x[1]);
+
   const samples = (window.__EVAL && window.__EVAL[r.c]) || [];
-  return r._eval = {ways, elements: el, mainCat: order[0][0], samples,
+  return r._eval = {ways:ways, elements: el.map(e=>e.t), elementRows: el,
+    thin: el.length<2,
+    mainCat: order[0][0], samples:samples, rubric:rubric,
+    feedback: FEEDBACK[order[0][0]], when: order[0][0]==='가치·태도' ? '3~6차시(지속)' : '3~5차시',
     area: areaKeyOf(r), count: order[0][0]==='가치·태도' ? '1회(지속 관찰)' : '1~2회'};
 }
-
 /* ============================================================
    화면 구성
    ============================================================ */
@@ -1052,10 +1214,16 @@ function panePlan(pane,r,terms){
   pane.appendChild(w);
 
   pane.appendChild(secTitle('개념적 렌즈','AI 초안'));
-  pane.appendChild(el('span','pill solid',k.lens));
+  const lw=el('div'); lw.appendChild(el('span','pill solid',k.lens));
+  pane.appendChild(lw);
+  pane.appendChild(el('div','lenswhy','단원 전체를 꿰뚫어 보게 하는 큰 개념입니다. '+k.lensWhy+'.'));
 
   pane.appendChild(secTitle('핵심 개념','성취기준·내용 요소에서 추출'));
-  const cw=el('div'); k.concepts.forEach(c=>cw.appendChild(el('span','pill',c))); pane.appendChild(cw);
+  const cw=el('div');
+  k.concepts.forEach(c=>cw.appendChild(el('span', k.pair.indexOf(c)>=0?'pill solid':'pill', c)));
+  pane.appendChild(cw);
+  pane.appendChild(el('div','lenswhy','옮겨 쓸 수 있는 이름씨만 골랐습니다. 진하게 표시한 '
+    +'「'+k.pair[0]+'」와 「'+k.pair[1]+'」를 짝으로 삼아 아래 일반화 문장을 세웠습니다.'));
 
   if(k.enduring){
     pane.appendChild(secTitle(`영속적 이해 — ${k.enduring.domain} 영역 핵심 아이디어`,'교육과정 원문'));
@@ -1068,13 +1236,18 @@ function panePlan(pane,r,terms){
     }
   }
   pane.appendChild(secTitle('일반화 문장','AI 초안'));
+  pane.appendChild(el('div','lenswhy','개념과 개념의 관계를 현재형으로 진술한 문장입니다. '
+    +'학생이 스스로 도달해야 할 결론이므로 수업 앞머리에 알려 주지 않습니다.'));
   k.gen.forEach(g=>{ const c=el('div','card'); c.textContent=g; pane.appendChild(c); });
 
   pane.appendChild(secTitle('탐구 질문','AI 초안'));
   const g=el('div','grid3');
-  [['사실적 질문',k.q.fact],['개념적 질문',k.q.conc],['논쟁적 질문',k.q.deb]].forEach(([t,list])=>{
-    const cell=el('div','card plain'); cell.appendChild(el('div','catname',t));
-    const ul=el('ul','tight'); list.forEach(x=>ul.appendChild(el('li',null,x)));
+  [['사실적 질문','답이 하나로 닫히는 질문. 바탕 지식을 갖추는 데 씁니다.',k.q.fact],
+   ['개념적 질문','다른 사례에도 옮겨 쓸 수 있는 질문. 일반화로 이끕니다.',k.q.conc],
+   ['논쟁적 질문','근거에 따라 답이 갈리는 질문. 토의·토론에 씁니다.',k.q.deb]].forEach(row=>{
+    const cell=el('div','card plain'); cell.appendChild(el('div','catname',row[0]));
+    cell.appendChild(el('div','lenswhy',row[1]));
+    const ul=el('ul','tight'); row[2].forEach(x=>ul.appendChild(el('li',null,x)));
     cell.appendChild(ul); g.appendChild(cell);
   });
   pane.appendChild(g);
@@ -1163,12 +1336,25 @@ function paneLesson(pane,r,terms){
   sbtn.appendChild(bCopySum); sbtn.appendChild(bActs);
   spot.appendChild(sbtn);
   pane.appendChild(spot);
-  pane.appendChild(secTitle('차시 흐름','AI 초안'));
-  const tw=el('div','card plain');
-  const ul=el('ul','tight');
-  td.steps.forEach(([k,x])=>{ const li=el('li');
-    const b=el('b',null,k+' '); li.appendChild(b); li.appendChild(document.createTextNode(x)); ul.appendChild(li); });
-  tw.appendChild(ul); pane.appendChild(tw);
+  pane.appendChild(secTitle('차시 흐름 (6차시 얼개)','AI 초안'));
+  const note=el('div','sub2');
+  note.textContent='성취기준 본문과 그 학년군 내용 요소(지식·이해 → 과정·기능 → 가치·태도)를 차례로 풀어 놓은 얼개입니다. 차시 수는 학교 진도에 맞게 늘이거나 줄여 쓰세요.';
+  pane.appendChild(note);
+  td.steps.forEach(st=>{
+    const c=el('div','card plain step');
+    const h=el('div','stephd');
+    h.appendChild(el('span','pill solid', st.ph));
+    h.appendChild(el('span','stept', st.t));
+    h.appendChild(el('span','pill', st.cat));
+    if(st.ev) h.appendChild(el('span','pill mark','평가'));
+    c.appendChild(h);
+    const u=el('ul','tight'); st.d.forEach(x=>u.appendChild(el('li',null,x))); c.appendChild(u);
+    pane.appendChild(c);
+  });
+  const bFlow=el('button','btn','차시 흐름 복사');
+  bFlow.onclick=()=>copy(td.steps.map(st=>st.ph+' '+st.t+String.fromCharCode(10)+
+    st.d.map(x=>'  · '+x).join(String.fromCharCode(10))).join(String.fromCharCode(10)), bFlow);
+  const fw=el('div','dact'); fw.appendChild(bFlow); pane.appendChild(fw);
   if(r.q&&r.q.length){
     pane.appendChild(secTitle('교육과정에 제시된 탐구 활동','교육과정 원문'));
     const u2=el('ul','tight'); r.q.forEach(x=>{ const li=el('li'); li.appendChild(hl(x,terms)); u2.appendChild(li); });
@@ -1183,12 +1369,17 @@ function paneLesson(pane,r,terms){
   c1.appendChild(el('div',null,`중심 범주: ${ed.mainCat}`)).style.cssText='font-size:12px;color:var(--dim);margin-top:3px';
   const c2=el('div','card plain'); c2.appendChild(el('div','catname','평가 요소'));
   const u3=el('ul','tight'); ed.elements.forEach(x=>u3.appendChild(el('li',null,x))); c2.appendChild(u3);
-  const c3=el('div','card plain'); c3.appendChild(el('div','catname','평가 횟수(권장)'));
+  if(ed.thin) c2.appendChild(el('div','lenswhy',
+    '이 교과는 교육과정 원문(내용 체계)이 제공되지 않아 성취기준 하나만 요소로 둡니다. 차시 흐름을 보고 나누어 쓰세요.'));
+  const c3=el('div','card plain'); c3.appendChild(el('div','catname','평가 시기 · 횟수(권장)'));
   c3.appendChild(el('div',null,ed.count)).style.fontWeight='700';
+  c3.appendChild(el('div',null,ed.when+' 무렵')).style.cssText='font-size:12px;color:var(--dim);margin-top:3px';
   c3.appendChild(el('div',null,'학교 평가 계획에 맞추어 조정')).style.cssText='font-size:12px;color:var(--dim);margin-top:3px';
   g.appendChild(c1); g.appendChild(c2); g.appendChild(c3);
   pane.appendChild(g);
 
+  pane.appendChild(secTitle('피드백 방안','AI 초안'));
+  pane.appendChild(el('div','card plain', ed.feedback));
   pane.appendChild(secTitle('평가 방법 제안','AI 초안'));
   ed.ways.forEach(({m,why,cat})=>{
     const c=el('div','card plain');
@@ -1497,14 +1688,16 @@ function mdOf(rows){
     const td=teachDraft(r), ed=evalDraft(r);
     L.push(`### 교수·학습 내용 초안 — AI 생성, 검토 필요`);
     L.push(`- 요약(단원명 칸): ${td.summary}`);
-    td.steps.forEach(([k,x])=>L.push(`- **${k}** ${x}`));
+    td.steps.forEach(st=>{ L.push(`- **${st.ph} ${st.t}**  \`${st.cat}\`${st.ev?' `평가`':''}`);
+      st.d.forEach(x=>L.push(`  - ${x}`)); });
     L.push('');
     L.push(`### 평가 계획 초안 — AI 생성, 검토 필요`);
     L.push(`- 평가 영역: ${ed.area} (중심 범주 ${ed.mainCat})`);
     L.push(`- 평가 요소: ${ed.elements.join(' / ')}`);
     L.push(`- 평가 방법: ${ed.ways.map(x=>x.m).join(', ')}`);
-    L.push(`- 평가 횟수(권장): ${ed.count}`);
-    L.push(`- 평가 기준: 위 성취수준 A·B·C 참고`);
+    L.push(`- 평가 시기·횟수(권장): ${ed.when} 무렵 / ${ed.count}`);
+    L.push(`- 평가 기준: 위 성취수준 A·B·C 원문을 그대로 씁니다`);
+    L.push(`- 피드백 방안: ${ed.feedback}`);
     if(ed.samples.length){
       L.push(`- 예시 평가 도구(원문):`);
       ed.samples.forEach(s2=>{
@@ -1514,8 +1707,9 @@ function mdOf(rows){
     }
     L.push('');
     L.push(`### 개념 기반 탐구 초안 — AI 생성, 검토 필요`);
-    L.push(`- 개념적 렌즈: **${k.lens}**`);
+    L.push(`- 개념적 렌즈: **${k.lens}** (${k.lensWhy})`);
     L.push(`- 핵심 개념: ${k.concepts.join(', ')}`);
+    L.push(`- 일반화의 짝: ${k.pair[0]} ↔ ${k.pair[1]}`);
     if(k.enduring) L.push(`- 영속적 이해(교육과정 핵심 아이디어 발췌): ${k.enduring.text}`);
     L.push(`- 일반화 문장(초안):`);
     k.gen.forEach(g=>L.push(`  - ${g}`));
@@ -1634,7 +1828,8 @@ function docOf(rows){
     H.push(`<tr><th>성취수준 B</th><td>${esc2(r.B)}</td></tr>`);
     H.push(`<tr><th>성취수준 C</th><td>${esc2(r.C)}</td></tr></table>`);
     H.push(`<h3>교수·학습 내용 (초안)</h3><p><b>${esc2(td.summary)}</b></p><ul>`);
-    td.steps.forEach(([kk,x])=>H.push(`<li><b>${esc2(kk)}</b> ${esc2(x)}</li>`));
+    td.steps.forEach(st=>{ H.push(`<li><b>${esc2(st.ph)} ${esc2(st.t)}</b> (${esc2(st.cat)}${st.ev?', 평가':''})<ul>`
+      + st.d.map(x=>`<li>${esc2(x)}</li>`).join('') + `</ul></li>`); });
     H.push(`</ul>`);
     if(r.q&&r.q.length){ H.push(`<h3>교육과정에 제시된 탐구 활동</h3><ul>`);
       r.q.forEach(x=>H.push(`<li>${esc2(x)}</li>`)); H.push(`</ul>`); }
@@ -1646,6 +1841,8 @@ function docOf(rows){
     H.push(`<h3>평가 계획 (초안)</h3><table>
       <tr><th style="width:14%">평가 영역</th><td>${esc2(ed.area)} (중심 범주 ${esc2(ed.mainCat)})</td></tr>
       <tr><th>평가 요소</th><td>${esc2(ed.elements.join(' / '))}</td></tr>
+      <tr><th>평가 시기·횟수</th><td>${esc2(ed.when+' 무렵 / '+ed.count)}</td></tr>
+      <tr><th>피드백 방안</th><td>${esc2(ed.feedback)}</td></tr>
       <tr><th>평가 방법</th><td>${esc2(ed.ways.map(x=>x.m+' — '+x.why).join('<br>')).replace(/&lt;br&gt;/g,'<br>')}</td></tr>
       <tr><th>평가 횟수</th><td>${esc2(ed.count)}</td></tr></table>`);
     if(ed.samples.length){ H.push(`<h3>예시 평가 도구 (원문)</h3><ul>`);

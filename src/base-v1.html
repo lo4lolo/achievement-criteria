@@ -1,0 +1,2796 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2022 개정 교육과정 초등 수업 설계 도우미</title>
+<style>
+:root{
+  --bg:#fff; --panel:#fff; --sunk:#fafafa; --sunk2:#f4f4f4;
+  --ink:#111; --dim:#666; --faint:#949494;
+  --line:#e4e4e4; --line2:#c8c8c8; --mark:#ececec;
+  --r:8px;
+}
+html[data-theme="dark"]{
+  --bg:#0e0e0f; --panel:#161617; --sunk:#1b1b1d; --sunk2:#202022;
+  --ink:#f0f0f0; --dim:#a0a0a0; --faint:#767676;
+  --line:#2a2a2c; --line2:#3d3d40; --mark:#3a3a3d;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Pretendard","Malgun Gothic",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  font-size:15px;line-height:1.62;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+a{color:var(--ink)}
+
+/* ---------- 헤더 ---------- */
+header{position:sticky;top:0;z-index:30;background:var(--panel);border-bottom:1px solid var(--line2);padding:9px 15px 0}
+.hrow{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:16px;letter-spacing:-.02em;white-space:nowrap;line-height:1.24}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--dim);margin-top:1px}
+.btn{border:1px solid var(--line2);border-radius:7px;padding:5px 10px;font-size:12.5px;font-weight:600;color:var(--dim);background:var(--panel)}
+.btn:hover{border-color:var(--ink);color:var(--ink)}
+.btn.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.sm{padding:3px 8px;font-size:11.5px}
+.searchwrap{position:relative;flex:1;min-width:220px}
+.searchwrap input{width:100%;padding:10px 70px 10px 32px;border:1.5px solid var(--line2);border-radius:8px;background:var(--bg);outline:none}
+.searchwrap input:focus{border-color:var(--ink)}
+.searchwrap .ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--faint);font-size:14px}
+.searchwrap .clr{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:1px solid var(--line);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--dim)}
+.filters{padding:8px 0 9px;display:flex;flex-direction:column;gap:5px}
+.frow{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.flabel{font-size:10.5px;color:var(--faint);font-weight:800;letter-spacing:.03em;min-width:32px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;color:var(--dim);background:var(--panel);white-space:nowrap}
+.chip:hover{border-color:var(--ink);color:var(--ink)}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .hi{font-size:9.5px;opacity:.7;margin-left:4px;font-weight:700}
+.fnote{font-size:11px;color:var(--faint)}
+
+/* ---------- 레이아웃 ---------- */
+main{display:grid;grid-template-columns:minmax(300px,375px) 1fr;gap:12px;padding:12px 15px 92px;align-items:start}
+.col{background:var(--panel);border:1px solid var(--line2);border-radius:var(--r)}
+.listhead{display:flex;align-items:center;gap:6px;padding:8px 11px;border-bottom:1px solid var(--line);font-size:12px;color:var(--dim);flex-wrap:wrap}
+.listhead b{color:var(--ink);font-size:13.5px}
+.list{max-height:calc(100vh - 262px);overflow:auto;overscroll-behavior:contain}
+.grouphead{position:sticky;top:0;background:var(--sunk);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  padding:5px 11px;font-size:11px;font-weight:800;color:var(--dim);z-index:2;display:flex;gap:6px;align-items:center}
+.grouphead .n{margin-left:auto;font-weight:600;color:var(--faint)}
+.item{display:flex;gap:8px;padding:9px 11px;border-bottom:1px solid var(--line);cursor:pointer;align-items:flex-start}
+.item:hover{background:var(--sunk)}
+.item.sel{background:var(--sunk2);box-shadow:inset 3px 0 0 var(--ink)}
+.item input[type=checkbox]{margin-top:4px;width:14px;height:14px;accent-color:#111;flex:none}
+.itemmain{min-width:0;flex:1}
+.code{font-family:"Consolas","D2Coding",ui-monospace,monospace;font-size:11.5px;font-weight:700}
+.meta{font-size:11px;color:var(--dim);margin-left:5px}
+.badge{font-size:9.5px;font-weight:700;color:var(--dim);border:1px solid var(--line2);border-radius:4px;padding:0 5px;margin-left:4px;white-space:nowrap}
+.itemtext{font-size:13px;margin-top:1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.empty{padding:34px 18px;text-align:center;color:var(--dim);font-size:13px}
+.relaxnote{padding:7px 11px;background:var(--sunk);color:var(--dim);font-size:11.5px;border-bottom:1px solid var(--line)}
+
+/* ---------- 상세 ---------- */
+.dhead{padding:14px 18px 11px;border-bottom:1px solid var(--line)}
+.dcode{font-family:"Consolas","D2Coding",ui-monospace,monospace;font-size:14.5px;font-weight:800}
+.dtags{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0 8px}
+.tag{border:1px solid var(--line);border-radius:5px;padding:2px 7px;font-size:11px;font-weight:600;color:var(--dim)}
+.tag.solid{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.dtext{font-size:16.5px;font-weight:600;line-height:1.55;letter-spacing:-.01em}
+.dact{display:flex;gap:5px;flex-wrap:wrap;margin-top:11px}
+.tabs{display:flex;padding:0 11px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{border-bottom:2.5px solid transparent;padding:9px 10px;font-size:12.5px;font-weight:700;color:var(--faint);white-space:nowrap}
+.tab.on{color:var(--ink);border-bottom-color:var(--ink)}
+.pane{padding:14px 18px 22px}
+
+/* ---------- 공통 블록 ---------- */
+h4.sec{margin:18px 0 7px;font-size:12px;font-weight:800;color:var(--dim);letter-spacing:.02em;display:flex;align-items:center;gap:6px}
+h4.sec:first-child{margin-top:0}
+h4.sec .src{font-weight:600;color:var(--faint);font-size:10.5px;border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.card{border:1px solid var(--line);border-radius:7px;padding:11px 13px;background:var(--sunk);font-size:13.5px;margin-bottom:8px}
+.card.plain{background:var(--panel)}
+.spotlight{border:2px solid var(--ink);border-radius:9px;padding:12px 14px;background:var(--sunk);margin-bottom:10px}
+.spotlight .lbl{font-size:10.5px;font-weight:800;letter-spacing:.03em;background:var(--ink);color:var(--bg);
+  border-radius:4px;padding:2px 7px;display:inline-block;margin-bottom:6px}
+.spotlight .big{font-size:16px;font-weight:700;line-height:1.5}
+.spotlight .sub{font-size:11.5px;color:var(--dim);margin-top:6px}
+.hint{font-size:12px;color:var(--dim);background:var(--sunk);border:1px solid var(--line);border-radius:7px;padding:8px 11px;margin-bottom:12px}
+.warn{font-size:12px;color:var(--ink);background:var(--sunk);border:1.5px dashed var(--line2);border-radius:7px;padding:9px 12px;margin-bottom:12px}
+ul.tight{margin:4px 0;padding-left:17px}
+ul.tight li{margin:2px 0}
+.lv{display:grid;grid-template-columns:28px 1fr;gap:10px;margin-bottom:10px;align-items:start}
+.lvb{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;font-weight:800;font-size:13px;border:1.5px solid var(--ink)}
+.lv-A .lvb{background:var(--ink);color:var(--bg)}
+.lv-B .lvb{background:var(--dim);color:var(--bg);border-color:var(--dim)}
+.lv-C .lvb{background:transparent}
+.lvt{padding-top:2px;font-size:14px}
+.catname{font-size:10.5px;font-weight:800;color:var(--faint);letter-spacing:.03em;margin-bottom:2px}
+.pill{display:inline-block;border:1px solid var(--line2);border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:700;color:var(--dim);margin:2px 3px 2px 0}
+.pill.solid{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:640px){.grid3{grid-template-columns:1fr}}
+mark{background:var(--mark);font-weight:700;border-radius:2px;padding:0 1px}
+
+/* ---------- 연관 / 위계 ---------- */
+.rel{border:1px solid var(--line);border-radius:7px;padding:9px 11px;margin-bottom:7px;cursor:pointer;background:var(--panel)}
+.rel:hover{border-color:var(--ink);background:var(--sunk)}
+.relhead{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.score{margin-left:auto;font-size:10px;font-weight:800;color:var(--dim);border:1px solid var(--line2);border-radius:999px;padding:1px 6px}
+.kw{border:1px solid var(--line2);border-radius:4px;padding:1px 6px;font-size:10.5px;font-weight:700;color:var(--dim);margin:4px 3px 0 0;display:inline-block}
+.tl{position:relative;padding-left:15px}
+.tl:before{content:"";position:absolute;left:4px;top:6px;bottom:6px;width:1.5px;background:var(--line2)}
+.tlband{position:relative;margin-bottom:14px}
+.tlband:before{content:"";position:absolute;left:-15px;top:7px;width:9px;height:9px;border-radius:50%;background:var(--bg);border:2px solid var(--ink)}
+.tlband.cur:before{background:var(--ink)}
+.tlname{font-size:11.5px;font-weight:800;color:var(--dim);margin-bottom:5px}
+.tlrow{display:flex;gap:8px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;margin-bottom:4px;cursor:pointer;font-size:12.5px;align-items:flex-start}
+.tlrow:hover{border-color:var(--ink);background:var(--sunk)}
+.tlrow.me{border-color:var(--ink);background:var(--sunk2);font-weight:600}
+.tlrow .code{white-space:nowrap;flex:none}
+
+/* ---------- 개념 지도 ---------- */
+.mapwrap{position:relative;border:1px solid var(--line);border-radius:7px;background:var(--sunk);overflow:hidden}
+.mapbar{display:flex;gap:5px;flex-wrap:wrap;padding:7px 9px;border-bottom:1px solid var(--line);background:var(--panel);align-items:center}
+svg.map{display:block;width:100%;height:560px;cursor:grab;touch-action:none}
+svg.map.drag{cursor:grabbing}
+.map .edge{stroke:var(--line2);fill:none}
+.map .edge.seq{stroke-dasharray:5 3}
+.map .edge.hot{stroke:var(--ink);stroke-width:1.8}
+.map .nd{cursor:pointer}
+.map .nd .box{fill:var(--panel);stroke:var(--line2);stroke-width:1.2}
+.map .nd.center .box{fill:var(--ink);stroke:var(--ink)}
+.map .nd.center text{fill:var(--bg)}
+.map .nd.concept .box{fill:var(--sunk2)}
+.map .nd.dom .box{stroke:var(--ink);stroke-dasharray:3 2}
+.map .nd:hover .box{stroke:var(--ink);stroke-width:2}
+.map text{fill:var(--ink);pointer-events:none;font-family:inherit}
+.legend{display:flex;gap:11px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:8px}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend i{width:15px;height:0;border-top:1.5px solid var(--line2);display:inline-block}
+.legend i.d{border-top-style:dashed}
+.legend b{width:10px;height:10px;border:1.5px solid var(--line2);background:var(--sunk2);border-radius:50%;display:inline-block}
+.legend b.sq{border-radius:3px;background:var(--panel)}
+
+/* ---------- 담기 바 / 푸터 / 모달 ---------- */
+.cart{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--panel);border-top:1px solid var(--line2);
+  padding:8px 15px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cart[hidden]{display:none}
+footer{padding:15px;text-align:center;font-size:11px;color:var(--faint);border-top:1px solid var(--line);line-height:1.7}
+footer a{color:var(--faint);text-decoration:none}
+dialog{border:1px solid var(--line2);border-radius:12px;padding:0;max-width:min(780px,94vw);width:100%;background:var(--panel);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.mhead{display:flex;align-items:center;padding:13px 18px;border-bottom:1px solid var(--line);font-weight:800;font-size:15px}
+.mbody{padding:16px 20px 20px;max-height:72vh;overflow:auto;font-size:13.5px}
+.mbody h4{margin:14px 0 5px;font-size:13px}
+.mbody ul{margin:5px 0;padding-left:17px}
+.mbody code{background:var(--sunk2);border-radius:3px;padding:1px 5px;font-family:"Consolas",monospace;font-size:12px}
+.x{margin-left:auto;border:1px solid var(--line);border-radius:6px;width:28px;height:28px;font-size:15px;color:var(--dim)}
+#loading{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:99;font-size:13px;color:var(--dim)}
+
+@media (max-width:920px){
+  main{grid-template-columns:1fr}
+  .col.detailcol{position:fixed;inset:0;z-index:50;border-radius:0;overflow:auto;display:none}
+  .col.detailcol.open{display:block}
+  .list{max-height:none}
+  .backbtn{display:inline-block!important}
+}
+.backbtn{display:none}
+@media print{
+  header,.cart,.tabs,.dact,.col.listcol,.btn,.backbtn,footer,.mapwrap{display:none!important}
+  body{background:#fff}main{display:block;padding:0}.col{border:0}
+  .printarea{display:block!important}
+}
+.printarea{display:none}
+
+.step{margin:6px 0}
+.stephd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.stept{font-weight:700}
+.pill.mark{background:#111;color:#fff;border-color:#111}
+.sub2{font-size:12.5px;color:var(--dim);margin:2px 0 8px}
+.rub{display:flex;gap:7px;align-items:flex-start;margin:4px 0;line-height:1.55}
+.rub .pill{flex:none;margin-top:2px}
+.lenswhy{font-size:12px;color:var(--dim);margin-top:3px}
+.card.hit{border-color:#111;border-width:2px}
+blockquote.quote{margin:8px 0;padding:10px 14px;border-left:3px solid #111;background:var(--soft,#f6f6f6);border-radius:0 6px 6px 0;line-height:1.65}
+.src{font-size:11.5px;color:var(--dim);margin-top:6px}
+.mapwrap{position:relative}
+.peek{position:absolute;right:10px;top:52px;width:min(340px,calc(100% - 24px));
+  background:var(--bg,#fff);border:1px solid var(--line,#ddd);border-radius:10px;
+  box-shadow:0 6px 24px rgba(0,0,0,.14);padding:12px 14px 10px;z-index:5;max-height:calc(100% - 70px);overflow:auto}
+.peekx{position:absolute;right:8px;top:6px;border:0;background:none;cursor:pointer;font-size:14px;color:var(--dim)}
+.peekcode{font-weight:700;margin:4px 0 2px}
+.peektext{line-height:1.6}
+.peekhae{font-size:12.5px;color:var(--dim);margin-top:6px;line-height:1.55}
+.peek .dact{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
+.backbtn+.backbtn{margin-left:6px}
+</style>
+</head>
+<body>
+<div id="loading">자료를 불러오는 중…</div>
+
+<header>
+  <div class="hrow">
+    <div class="brand">2022 개정 교육과정 초등 수업 설계 도우미<small>성취기준 · 성취수준 · 내용 체계 · 개념 기반 탐구</small></div>
+    <div class="searchwrap">
+      <span class="ico">🔎</span>
+      <input id="q" type="search" placeholder="낱말 일부만 넣어도 찾습니다 — 생태, 자료분석, 2국01, ㅅㅌㅎㄱ" autocomplete="off" spellcheck="false">
+      <button class="clr" id="clr" hidden>지우기</button>
+    </div>
+    <div style="flex:1"></div>
+    <button class="btn" id="btnGuide">교과 살펴보기</button>
+    <button class="btn" id="btnHelp">도움말</button>
+    <button class="btn" id="btnTheme">야간</button>
+  </div>
+  <div class="filters">
+    <div class="frow"><span class="flabel">학년군</span><span id="fBand" style="display:contents"></span></div>
+    <div class="frow"><span class="flabel">교과</span><span id="fSubj" style="display:contents"></span></div>
+    <div class="frow" id="areaRow"><span class="flabel">영역</span><span id="fArea" style="display:contents"></span></div>
+  </div>
+</header>
+
+<main>
+  <section class="col listcol">
+    <div class="listhead">
+      <b id="cnt">0건</b><span id="scope"></span>
+      <span style="flex:1"></span>
+      <button class="btn sm" id="btnSort" hidden>관련도 순</button>
+      <button class="btn sm" id="btnAll">전체 담기</button>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+  <section class="col detailcol" id="detailcol"><div id="detail"></div></section>
+</main>
+
+<div class="cart" id="cart" hidden>
+  <b id="cartN">0개</b><span style="color:var(--dim);font-size:12px">수업 바구니</span>
+  <span style="flex:1"></span>
+  <button class="btn" id="cartView">목록</button>
+  <button class="btn" id="cartCopy">표로 복사</button>
+  <button class="btn" id="cartCsv">CSV</button>
+  <button class="btn" id="cartPlan">평가계획 CSV</button>
+  <button class="btn" id="cartDoc">Word 문서</button>
+  <button class="btn on" id="cartMd">MD 내려받기</button>
+  <button class="btn" id="cartPrint">인쇄/PDF</button>
+  <button class="btn" id="cartClear">비우기</button>
+</div>
+
+<footer>
+  제작: 하는교사(<a href="mailto:4lolo@naver.com">4lolo@naver.com</a>)<br>
+  <span id="srcline"></span>
+</footer>
+
+<dialog id="dlg"><div class="mhead"><span id="dlgTitle"></span><button class="x" onclick="dlg.close()">✕</button></div><div class="mbody" id="dlgBody"></div></dialog>
+<div class="printarea" id="printarea"></div>
+
+<script>
+/* ============================================================
+   2022 개정 교육과정 초등 수업 설계 도우미 — 핵심 로직
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const el = (t,c,x) => { const n=document.createElement(t); if(c) n.className=c; if(x!=null) n.textContent=x; return n; };
+const svgEl = (t,a) => { const n=document.createElementNS('http://www.w3.org/2000/svg',t);
+  for(const k in (a||{})) n.setAttribute(k,a[k]); return n; };
+
+let BANDS, SUBJ, STD, AREA, DOM, GUIDE, SMETA;
+const CATS = ['지식·이해','과정·기능','가치·태도'];
+const shortBand = b => (b||'').replace('초등 ','');
+
+/* ---------- 정규화 / 초성 ---------- */
+const CHO=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const norm = s => (s||'').toLowerCase().replace(/[･ㆍ・•⋅]/g,'·').replace(/[‘’'"“”]/g,'').replace(/\s+/g,'');
+function chosung(s){ let o=''; for(const ch of (s||'')){ const c=ch.charCodeAt(0);
+  if(c>=0xAC00&&c<=0xD7A3) o+=CHO[Math.floor((c-0xAC00)/588)]; else if(c>=0x3131&&c<=0x314E) o+=ch; } return o; }
+const isChoQuery = s => /^[ㄱ-ㅎ]{2,}$/.test(s.replace(/\s+/g,''));
+
+/* ---------- 형태 정리 / 토큰 ---------- */
+const JOSA=/(으로써|으로서|이라는|라는|에서의|에게서|으로|에서|에게|부터|까지|보다|처럼|과의|와의|의|을|를|이|가|은|는|에|와|과|로|도|만|나|며|고)$/;
+const EOMI=/(하였다|하였고|합니다|한다|하는|하여|하고|하며|하기|할|함|됨|되는|되어|되고|된|있다|있는|이다|으면서|면서|인|적인|적으로|적|들)$/;
+const STOP=new Set(('수 등 및 것 그 이 저 때 더 잘 또 통해 위해 위한 위하여 대해 관해 다양 다양한 여러 여러가지 '+
+ '가지 자신 우리 서로 무엇 어떻 있다 있음 한다 하기 대한 관한 알맞 알맞은 적절 적절한 정확 정확하게 부분 부분적 '+
+ '일부 적극 적극적 다소 대체 대체로 능숙 간단 간단한 안내 절차 주어진 제시 따라 찾아 구체 다른 기본 바탕 통하여 '+
+ '대략 가진다 갖는다 지닌다 성취 기준 수준 학생 학습 평가 영역 학년 학년군 초등학교 중학교').split(' '));
+function tokens(text){
+  const out=[];
+  for(let w of (text||'').replace(/[^가-힣A-Za-z0-9\s]/g,' ').split(/\s+/)){
+    if(!w) continue;
+    if(/^[A-Za-z0-9]+$/.test(w)){ if(w.length>1) out.push(w.toLowerCase()); continue; }
+    let t=w;
+    for(let k=0;k<2;k++){ const b=t; t=t.replace(EOMI,''); t=t.replace(JOSA,''); if(t===b) break; }
+    if(t.length>=2&&t.length<=9&&!STOP.has(t)) out.push(t);
+    if(t.length>=6){ const h=t.slice(0,4); if(!STOP.has(h)) out.push(h); }
+  }
+  return out;
+}
+
+/* ---------- 색인 ---------- */
+const AREAIDX=new Map(), DOMIDX=new Map();
+let DF=new Map(), N=0, ALLTEXT=null;
+
+function buildIndex(){
+  AREA.forEach(a=>AREAIDX.set(a.b+'|'+a.s+'|'+a.ak, a));
+  for(const subj in DOM) DOM[subj].forEach(d=>DOMIDX.set(subj+'|'+d.name, d));
+  STD.forEach((r,i)=>{
+    r.i=i; r.band=BANDS[r.b]; r.subj=SUBJ[r.s];
+    r._head=norm(r.c+r.t+r.a+r.subj+r.band);
+    r._body=norm(r.A+r.B+r.C+(r.hae||''));
+    r._cho=chosung(r.t+' '+r.a);
+  });
+  N=STD.length;
+  STD.forEach(r=>{
+    const tf=new Map();
+    tokens(r.t).forEach(t=>tf.set(t,(tf.get(t)||0)+3));
+    tokens(r.A+' '+r.B+' '+r.C).forEach(t=>tf.set(t,(tf.get(t)||0)+1));
+    (r.q||[]).forEach(x=>tokens(x).forEach(t=>tf.set(t,(tf.get(t)||0)+1)));
+    if(r.hae) tokens(r.hae).forEach(t=>tf.set(t,(tf.get(t)||0)+1));
+    r._tf=tf; for(const t of tf.keys()) DF.set(t,(DF.get(t)||0)+1);
+  });
+  STD.forEach(r=>{ r._v=vecFromTf(r._tf); });
+}
+function vecFromTf(tf){
+  const v=new Map(); let s=0;
+  for(const [t,f] of tf){ const df=DF.get(t); if(!df||df>N*0.35) continue;
+    const w=(1+Math.log(f))*Math.log(N/df); v.set(t,w); s+=w*w; }
+  const nr=Math.sqrt(s)||1; for(const [t,w] of v) v.set(t,w/nr); return v;
+}
+function vecOfText(t){ const tf=new Map(); tokens(t).forEach(x=>tf.set(x,(tf.get(x)||0)+1)); return vecFromTf(tf); }
+function cos(a,b){ let d=0; const s=a.size<b.size?a:b, g=s===a?b:a;
+  for(const [t,w] of s){ const u=g.get(t); if(u) d+=w*u; } return d; }
+
+const areaOf = r => AREAIDX.get(r.b+'|'+r.s+'|'+r.ak);
+let DOMPICK={};
+let GUIDEPG={}, INQACT={};
+try{ DOMPICK=JSON.parse(localStorage.getItem('dompick2022')||'{}'); }catch(e){}
+const domName = r => DOMPICK[r.c] || r.dom || null;
+const domOf  = r => { const n=domName(r); return n? DOMIDX.get(r.subj+'|'+n) : null; };
+function setDom(r,name){
+  if(name) DOMPICK[r.c]=name; else delete DOMPICK[r.c];
+  try{ localStorage.setItem('dompick2022',JSON.stringify(DOMPICK)); }catch(e){}
+  r._cbi=null; r._con=null;
+}
+const guideKey = r => (GUIDE[r.subj+'|'+r.a] ? r.subj+'|'+r.a
+                     : (GUIDE[r.subj+'|'+(r.dom||'')] ? r.subj+'|'+(r.dom||'') : null));
+const guideOf = r => { const k=guideKey(r); return k? GUIDE[k] : null; };
+/* 과학은 단원마다 <탐구 활동>을 따로 제시한다. 고려 사항과 섞으면 안 된다. */
+const inqOf = r => (typeof INQACT!=='undefined'
+  ? (INQACT[r.subj+'|'+r.a] || INQACT[r.subj+'|'+(r.dom||'')] || null) : null);
+/* 고려 사항 가운데 이 성취기준을 바로 풀이하는 대목을 가려낸다.
+   그런 대목은 해설과 함께 인용으로 드러내야 선생님이 놓치지 않는다. */
+function guideRows(r){
+  if(r._gr) return r._gr;
+  const k=guideKey(r); if(!k) return r._gr=[];
+  const gd=GUIDE[k]||[], pgs=(typeof GUIDEPG!=='undefined'? (GUIDEPG[k]||[]) : []);
+  const key=(r.t+' '+(r.hae||'')).replace(/\s/g,'');
+  return r._gr=gd.map((t,i)=>{
+    const a=t.replace(/\s/g,''); let hit=0;
+    for(let j=0;j+3<=a.length;j++) if(key.includes(a.slice(j,j+3))) hit++;
+    const need=Math.max(4, Math.min(10, Math.round(a.length*0.10)));
+    return {t:t, pg:pgs[i], direct: a.length>=28 && hit>=need};
+  });
+}
+/* 내용 체계에서 이 성취기준 학년군의 범주별 내용 요소 */
+/* 교과마다 내용 체계의 결이 다르다. 국어·사회·과학·영어는 한 영역이 다시
+   하위 범주로 갈린다(과학의 '고체 지구·유체 지구·천체' 등). 성취기준이 어느
+   하위 범주에 놓이는지 가려내야 엉뚱한 내용 요소가 딸려 오지 않는다. */
+function subPick(r){
+  if(r._sub!==undefined) return r._sub;
+  const d=domOf(r);
+  r._sub=null;
+  if(d&&d.sub){
+    const own=(r.t+' '+(r.hae||'')+' '+((guideOf(r)||[]).join(' '))+' '+(r.a||'')).replace(/\s/g,'');
+    // 여러 하위 범주에 두루 나오는 말('우리나라의' 같은)은 가려내는 힘이 없다
+    if(!d._sw){
+      const cnt={}, nsub=new Set();
+      CATS.forEach(c2=>{ const it=(d.content[c2]||{})[r.band]||[], sv=((d.sub||{})[c2]||{})[r.band]||[];
+        it.forEach((x,i)=>{ if(!sv[i]) return; nsub.add(sv[i]);
+          const a=x.replace(/\s/g,''); const seen=new Set();
+          for(let j=0;j+2<=a.length;j++) seen.add(a.slice(j,j+2));
+          seen.forEach(w=>{ (cnt[w]=cnt[w]||new Set()).add(sv[i]); }); }); });
+      d._sw=new Set(Object.keys(cnt).filter(w=>cnt[w].size > Math.max(1, nsub.size/2)));
+    }
+    const sc={};
+    CATS.forEach(c=>{
+      const items=(d.content[c]||{})[r.band]||[], subs=((d.sub||{})[c]||{})[r.band]||[];
+      items.forEach((it,i)=>{ const sb=subs[i]; if(!sb) return;
+        const a=it.replace(/\s/g,''); let n=0;
+        for(let j=0;j+2<=a.length;j++){ const w=a.slice(j,j+2);
+          if(!d._sw.has(w) && own.includes(w)) n++; }
+        sc[sb]=(sc[sb]||0)+n; });
+    });
+    const ks=Object.keys(sc).sort((x,y)=>sc[y]-sc[x]);
+    if(ks.length && sc[ks[0]]>=3 && sc[ks[0]] > (sc[ks[1]]||0)) r._sub=ks[0];
+  }
+  return r._sub;
+}
+function contentOf(r){
+  const d=domOf(r); if(!d) return null;
+  const sb=subPick(r);
+  const out={}; let any=false;
+  CATS.forEach(c=>{ let v=(d.content[c]||{})[r.band]; if(!v||!v.length) return;
+    if(sb){ const subs=((d.sub||{})[c]||{})[r.band]||[];
+      const f=v.filter((x,i)=>!subs[i]||subs[i]===sb);
+      if(f.length) v=f; }
+    out[c]=v; any=true; });
+  return any?out:null;
+}
+/* 그 영역 전체(하위 범주로 좁히기 전)의 내용 요소 */
+function contentAllOf(r){
+  const d=domOf(r); if(!d) return null;
+  const out={}; let any=false;
+  CATS.forEach(c=>{ const v=(d.content[c]||{})[r.band]; if(v&&v.length){ out[c]=v; any=true; } });
+  return any?out:null;
+}
+
+/* ---------- 개념어 ----------
+   개념 기반 탐구의 '개념'은 옮겨 쓸 수 있는 이름씨여야 한다.
+   조사를 단서로 이름씨만 뽑고, 관형어(중요한)와 용언 어간(일어난·고려하)은 버린다. */
+const JOSA_N = /([가-힣]{2,8})(으로써|으로서|이라는|에서의|에게서|이나|에게|에서|으로|보다|처럼|과의|와의|을|를|이|가|은|는|의|에|와|과|로|도)(?=[\s,.]|$)/g;
+const STEM_N = /[하되지나오우거려]$/;
+/* 개념으로 삼을 수 없는 두루뭉술한 말 */
+/* 개념 목록에는 남기되, 일반화 문장의 짝으로는 쓰지 않는 말 */
+const ABSTRACT = /^(의미|뜻|특징|특성|유형|종류|조건|기준|역할|성질|상태|형태|모양|생김새|원리|개념|요소|대상|방법|과정|결과|위치|기능|쓰임|구조|모형|기법|주법|표현|감상|이해|활용|적용|분류|비교|관찰|조사|탐구|설명|파악|확인|점검|조정|생성|추론|해석|수집|계산|측정|실천|참여|변화|관계|영향|정의|종류별|사례|자료|정보|내용별|측정기|장치|기구|도구|자료|기준별)$/;
+const NOTCON = /^(내용|것|때|수|방법|활동|생각|사람|우리|자신|여러|다양|이해|사용|관련|필요|중요|모습|경우|이것|저것|여기|거기|정도|하나|가지|자기|서로|모두|다른|같은|위해|통해|바탕|중심|이상|이하|이때|무엇|어떤|여러 가지|점|일|말|글|것들|친구|선생|학교|공부|학습|수업|시간|장소|측정기|장치|기구|일상생활|생활|사회|주변|있음|자연|세계|현상|종류|상황|과학|물체들|것임|위해서|대해서|통해서|위하여|이루|자라|한살|하기|되기|흥미|관심|호기심|즐거움|보람|자신감|참여|노력|실천)$/;
+const ACTION_N = /^(파악|확인|조직|활용|표현|비교|분석|조사|관찰|이해|감상|정리|구성|점검|조정|선별|재구성|생성|추론|평가|해석|적용|탐색|탐구|설명|제시|수집|계산|측정|분류|실천|참여)$/;
+function nounsOf(text){
+  const out=[]; const re=new RegExp(JOSA_N.source,'g'); let m;
+  while((m=re.exec((text||'')+' '))!==null){
+    let w=m[1].replace(/들$/,'').replace(/적$/,'');
+    if(m[2]==='이' && w.length<=3) continue;      // '말놀이'가 '말놀'로 잘리는 것을 막는다
+    if(w.length<2) continue;
+    if(w.length<=5 && STEM_N.test(w)) continue;
+    if(NOTCON.test(w)) continue;
+    if(/(으|인가|는가|ㄴ가)$/.test(w)) continue;
+    if(!out.includes(w)) out.push(w);
+  }
+  return out;
+}
+/* 내용 요소에서 개념 뽑기 — 지식·이해는 통째로, 과정·기능은 다루는 대상만 */
+function conceptOfElement(x, whole){
+  let s=(x||'').replace(/\s*하기$/,'').trim();
+  if(!s) return null;
+  if(whole) return (s.length>=2 && s.length<=14) ? s : null;
+  const byJosa=nounsOf(s);
+  if(byJosa.length) return byJosa[0];
+  let w=s.split(/\s+/);
+  if(w.length>1 && ACTION_N.test(w[w.length-1])) w=w.slice(0,-1);
+  let c=(w[w.length-1]||'').replace(/(으로|로|에|을|를|이|가|은|는|의|와|과)$/,'');
+  if(c.length<2 || (c.length<=5 && STEM_N.test(c)) || NOTCON.test(c)) return null;
+  return c.length<=12 ? c : null;
+}
+/* 내용 요소가 이 성취기준과 실제로 맞물리는지 (헛겹침을 막으려 3글자 이상으로 본다) */
+function relatedTo(x, own){
+  if(!x) return false;
+  const a=(x||'').replace(/\s/g,''), b=(own||'').replace(/\s/g,'');
+  if(a.length<2) return false;
+  if(a.length<=3) return b.includes(a);
+  for(let i=0;i+3<=a.length;i++) if(b.includes(a.slice(i,i+3))) return true;
+  return false;
+}
+/* 내용 요소가 이 성취기준을 정말 가리키는지 — 요소의 알맹이 낱말이 성취기준에 있어야 한다.
+   '동물의 생활' 성취기준에 '동물의 한살이'가 딸려 오는 것을 막는다. */
+function coreWord(x){
+  const w=(x||'').replace(/[·,()]/g,' ').split(/\s+/).filter(Boolean);
+  if(!w.length) return '';
+  return w[w.length-1].replace(/(의|을|를|이|가|은|는|와|과|에|로)$/,'');
+}
+function relatedCore(x, own){
+  const cw=coreWord(x);
+  if(cw.length<2) return false;
+  return own.replace(/\s/g,'').includes(cw);
+}
+/* 성취기준이 다루는 대상을 뽑는다.
+   목적어('~을/를')를 먼저 보고, 없으면 주어('~은/는/이/가')를 본다.
+   '계절 변화의 원인을 …' -> '계절 변화',  '뼈와 근육의 생김새를 …' -> '뼈와 근육' */
+const MODI=/^(여러 가지|여러|다양한|간단한|기본적인|알맞은|적절한|주변의|일상생활에서|생활 속|우리|하루 동안|자신의|서로 다른)\s+/;
+function topicOf(r){
+  if(r._topic!==undefined) return r._topic;
+  const t=(r.t||'').replace(/\s+/g,' ');
+  let head='';
+  // '낮과 밤이 생기는 이유', '계절 변화의 원인' — 까닭이 걸린 그 대상이 주제다
+  const mc=t.match(/([가-힣][가-힣\s]{1,20}?)(?:이|가|의)?\s*(?:생기는|나타나는|일어나는|달라지는|되는)?\s*(?:원인|이유|까닭)/);
+  if(mc){
+    let h=mc[1].replace(/^.*?(?:을|를|으로|로|에서)\s+/,'').trim();
+    h=h.replace(MODI,'').trim();
+    h=h.replace(/\s*(발생하는|생기는|나타나는|일어나는|되는|하는)$/,'').trim();
+    h=h.replace(/(이|가|은|는)$/,'').trim();
+    if(h.length>=2 && h.length<=14 && !NOTCON.test(h)) return r._topic=h;
+  }
+  const m=t.match(/^(.*?)(?:을|를)\s/);
+  if(m) head=m[1];
+  else { const m2=t.match(/^(.*?)(?:은|는|이|가)\s/); if(m2) head=m2[1]; }
+  if(!head) head=t;
+  // 여럿을 늘어놓았으면 첫 번째가 대표다
+  head=head.split(/\s*,\s*/)[0];
+  // 앞에 붙은 조건·도구 구절을 덜어 낸다
+  head=head.replace(/^.*?(?:으로써|으로서|로써|로서|을 통해|를 통해|을 통하여|를 통하여|에서)\s+/, '');
+  head=head.replace(/^.*?(?:으로|로)\s+/, '');
+  head=head.replace(/^(인해|말미암아|하여|해서|인하여)\s+/, '');
+  head=head.replace(MODI, '').trim();
+  // '~의 원인/특징/방법' 같은 꼬리를 덜어 대상만 남긴다
+  let x=trimTail(head) || head;
+  x=x.replace(/(과|와)\s*같은.*$/, '').trim();
+  // 'A와 B 사이의 …' 는 A가 대표다
+  x=x.replace(/(\s|^)사이$/,'').trim();
+  if(x.length>14){
+    const cut=x.match(/^(.*?)(?:과|와)\s/);          // 여럿을 늘어놓았으면 앞것
+    if(cut && cut[1].trim().length>=2) x=cut[1].trim();
+    if(x.length>14){ const w=x.split(' '); x=w.slice(-2).join(' '); }
+  }
+  x=trimTail(x) || x;
+  // 이름씨가 아니면 개념으로 쓸 수 없다. 조각이면 아예 버리고 내용 요소에 맡긴다.
+  if(/(때|것|수|점|일)$/.test(x) && x.length<=6) x='';
+  if(/(하는|되는|이는|있는|없는|가는|오는|주는|짓는|한|된|운|는)$/.test(x)) x='';
+  if(/(함|됨|짐|림|남|늠)$/.test(x)) x='';
+  if(/(하고|하며|하여|되어|되고|이고|보고|알고|치고|나고)$/.test(x)) x='';
+  if(/(에|에서|으로|로|와|과|의|을|를|이|가|은|는|도|만)$/.test(x)) x='';
+  if(/(되|하)$/.test(x)) x='';
+  if(/(다|을|를|은|는|의|과|와)$/.test(x) && /\s/.test(x)) x='';
+  if(/(적|간)$/.test(x) && x.length<=4) x='';
+  if(/(하는|되는|드는|나는|지는|생기는|발생하는)$/.test(x)) x='';
+  if(/(하고|하며|하여|되어|되고)\s[가-힣]$/.test(x)) x='';   // '관찰하고 그' 같은 조각
+  if(/(지|나|오|우|거|려|리|치|피|비)$/.test(x) && x.length<=4) x='';
+  if(x.length<2 || NOTCON.test(x) || ABSTRACT.test(x)) x='';
+  return r._topic=x;
+}
+/* '동물 분류·바다의 특징·도구의 이용'처럼 뒤에 붙은 행위·속성 말을 떼어
+   가리키는 대상만 남긴다. 남는 말이 시원치 않으면 그 개념은 버린다. */
+const TAIL=/\s*(의)?\s*(분류|이용|활용|특징|특성|조건|성질|상태|방법|과정|구조|기능|역할|종류|모습|현상|원인|이유|까닭|생김새|차이|관계|의미|필요성|중요성|사례|정도|경우|영향)$/;
+const ATTTAIL=/\s*(에|에 대한|을|를)?\s*(흥미|관심|호기심|즐거움|자신감|태도|습관|의욕)$/;
+function trimTail(x){
+  x=(x||'').trim();
+  if(ATTTAIL.test(x)){
+    const h=x.replace(ATTTAIL,'').replace(/(의|을|를|이|가|은|는|에)$/,'').trim();
+    if(h.length>=2 && !NOTCON.test(h)) return h;
+    return '';
+  }
+  x=(x||'').trim();
+  if(!TAIL.test(x)) return x;
+  const head=x.replace(TAIL,'').replace(/(의|을|를|이|가|은|는)$/,'').trim();
+  if(head.length<2) return '';
+  if(NOTCON.test(head) || /^(세|네|두|여러|다양한|여러 가지|한|자라는|이루는)/.test(head)) return '';
+  return head;
+}
+/* 개념은 문장에 넣어 읽을 만큼 짧아야 한다 */
+function shortConcept(x){
+  x=(x||'').trim();
+  if(x.length<=9) return x;
+  const w=x.split(/\s+/);
+  if(w.length>=2){ const t=w.slice(-2).join(' '); if(t.length<=12) return t; }
+  return w[w.length-1] || x;
+}
+function conceptsOf(r,k){
+  if(!r._con){
+    const ct=contentOf(r)||{};
+    const out=[];
+    const push=x=>{ if(!x||x.length<2||NOTCON.test(x)) return;
+      if(/(하고|하며|하여|되어|되$|하$|함$|됨$)/.test(x)) return;
+      if(/적$/.test(x) && x.length<=4) return;        // '음악적' 같은 매김씨는 개념이 아니다
+      if(/(을|를|은|는|의|과|와|에|로|가|이)$/.test(x) && /\s/.test(x)) return;
+      if(/(하는|되는|나타난|믿은|같은|다른|여러)$/.test(x)) return;
+      if(/(다|을|를|은|는|이|가|의|과|와)$/.test(x) && x.length<=6 && /\s/.test(x)) return;
+      if(out.some(o=>o===x||o.includes(x)||x.includes(o))) return;
+      out.push(x); };
+    const own = r.t + ' ' + (r.hae || '');
+    const related = x => relatedTo(x, own);
+    // ⓪ 성취기준이 다루는 대상이 으뜸이다.
+    //    내용 요소에 같은 것을 가리키는 말이 있으면 원문 표현을 쓴다.
+    const tp = topicOf(r);
+    if(tp){
+      const flat0 = tp.replace(/\s/g,'');
+      let best = '';
+      (ct['지식·이해']||[]).filter(usable).forEach(x=>{
+        const cc = trimTail(shortConcept(conceptOfElement(x,true)));
+        if(!cc) return;
+        const a = cc.replace(/\s/g,'');
+        if(a===flat0 || flat0.includes(a) || a.includes(flat0)){
+          if(!best || Math.abs(cc.length-tp.length) < Math.abs(best.length-tp.length)) best=cc;
+        }
+      });
+      push(best || tp);
+    }
+    // ① 내용 요소는 교육과정이 쓴 낱말 그대로라 가장 믿을 만하다.
+    //    하위 범주로 좁혀 두었으므로 이 성취기준과 맞물리는 것만 남는다.
+    const flat=own.replace(/\s/g,'');
+    const ov=x=>{ const a=(x||'').replace(/\s/g,''); let n=0;
+      for(let i=0;i+2<=a.length;i++) if(flat.includes(a.slice(i,i+2))) n++;
+      return n; };
+    (ct['지식·이해']||[]).filter(usable).filter(x=>relatedCore(x, own))
+      .map(x=>[x, ov(x)]).sort((a,b)=>b[1]-a[1])
+      .forEach(z=>{ const cc=conceptOfElement(z[0],true);
+        if(cc) push(trimTail(shortConcept(cc))); });
+    // ② 그 다음이 성취기준에서 뽑은 이름씨
+    nounsOf(r.t).slice(0,4).forEach(push);
+    (ct['과정·기능']||[]).filter(usable).forEach(x=>{ const cc=conceptOfElement(x,false);
+      if(cc && related(cc)) push(trimTail(shortConcept(cc))); });
+    if(out.length<2){
+      (ct['지식·이해']||[]).filter(usable).slice(0,2)
+        .forEach(x=>push(trimTail(shortConcept(conceptOfElement(x,true)))));
+    }
+    if(!out.length) push(areaKeyOf(r));
+    r._con=out.slice(0,6);
+  }
+  return k? r._con.slice(0,k) : r._con;
+}
+const CONIDX=new Map();
+function buildConceptIndex(){
+  STD.forEach(r=>conceptsOf(r,6).forEach(t=>{ if(!CONIDX.has(t)) CONIDX.set(t,[]); CONIDX.get(t).push(r); }));
+}
+
+/* ---------- 범주 성향 ---------- */
+const CATRULE=[
+  [/이해한다|이해하고|안다|알고|알며|설명한다|설명하고|파악한다|파악하고|인식한다|구별한다|구분한다|의미를|개념을|특징을|원리를/g,0],
+  [/탐구한다|탐구하고|조사한다|조사하고|분석한다|분석하고|비교한다|비교하고|관찰한다|관찰하고|표현한다|표현하고|나타낸다|만든다|만들고|설계한다|해결한다|활용한다|수행한다|그린다|연주한다|발표한다|토의한다|토론한다|측정한다|계산한다|읽는다|쓴다|말한다|듣는다/g,1],
+  [/태도를|흥미를|관심을|실천한다|실천하며|존중한다|존중하며|노력한다|즐긴다|참여한다|참여하며|기른다|가진다|지닌다|갖는다|배려한다|감상한다|공감한다/g,2],
+];
+const AVEC=new Map();
+function areaCatVec(a,cat){
+  const k=a.b+'|'+a.s+'|'+a.ak+'|'+cat;
+  if(!AVEC.has(k)){ let t='';
+    for(const L of ['A','B','C']){ const d=a.L[L]; if(d) for(const c in d) if(c===cat) t+=' '+d[c]; }
+    AVEC.set(k, t.trim()? vecOfText(t) : new Map()); }
+  return AVEC.get(k);
+}
+function catProfile(r){
+  if(r._prof) return r._prof;
+  const rule=[0,0,0];
+  CATRULE.forEach(([re,i])=>{ const m=r.t.match(re); if(m) rule[i]+=m.length; });
+  const sim=[0,0,0], a=areaOf(r);
+  if(a) CATS.forEach((c,i)=>{ sim[i]=cos(r._v, areaCatVec(a,c)); });
+  const nz=(v,sm)=>{ const w=v.map(x=>x+sm), s=w.reduce((x,y)=>x+y,0); return w.map(x=>x/s); };
+  const R=nz(rule.map(x=>Math.log(1+x)),0.32), S=nz(sim,0.02);
+  let p=[0,1,2].map(i=>R[i]*0.62+S[i]*0.38);
+  const s=p.reduce((x,y)=>x+y,0);
+  return r._prof = s>0? p.map(x=>x/s) : [1/3,1/3,1/3];
+}
+const mainCat = r => CATS[catProfile(r).indexOf(Math.max(...catProfile(r)))];
+
+/* ============================================================
+   개념 기반 탐구 초안 (AI 생성 — 반드시 교사 검토)
+   Erickson·French의 얼개를 따른다.
+   · 개념       : 옮겨 쓸 수 있는 이름씨
+   · 개념적 렌즈 : 단원 전체를 꿰뚫어 보게 하는 큰 개념
+   · 일반화     : 개념과 개념의 관계를 현재형으로 진술한 문장
+   · 탐구 질문   : 사실적(닫힌) → 개념적(옮겨 쓰는) → 논쟁적(따져 보는)
+   ============================================================ */
+/* 받침에 따라 조사를 고른다 */
+function jong(w){ if(!w) return false; const c=w.charCodeAt(w.length-1);
+  if(c<0xAC00||c>0xD7A3) return /[013678lmnprt]$/i.test(w); return ((c-0xAC00)%28)!==0; }
+function J(w,a,b){
+  w=(w||'').trim();
+  if((a==='으로'&&b==='로')||(a==='로'&&b==='으로')){
+    const c=w.charCodeAt(w.length-1);
+    const jc=(c>=0xAC00&&c<=0xD7A3)?((c-0xAC00)%28):0;
+    return w + ((jc===0||jc===8)?'로':'으로');     // 받침 없거나 'ㄹ' 이면 '로'
+  }
+  return w + (jong(w)?a:b);
+}
+/* 탐구 질문에 쓸 만한 내용 요소인지 (원문 조판으로 잘린 조각 제외) */
+function usable(x){
+  if(!x) return false;
+  const w=x.trim().split(/\s+/);
+  return x.length>=4 && x.length<=34 && !/^[-–—\s]*$/.test(x) && w[w.length-1].length>=2;
+}
+/* 내용 요소를 문장 속에 넣기 좋게 다듬는다 */
+function elemNoun(x){
+  return (x||'').replace(/\s*하기$/,'하는 일').trim();
+}
+/* 내용 요소를 '~하기' 활동 이름으로 (이미 그런 꼴이면 그대로) */
+const elemAct = x => /하기$|기$/.test((x||'').trim()) ? (x||'').trim() : toActivity(x);
+
+const LENSES=[
+  {n:'변화', re:/변화|달라지|바뀌|성장|발달|흐름|시대|과거|미래|계절|순환|한살이|자라|되어 가/,
+   B:'시간', altB:'지나온 흐름', fixB:true,
+   gen:[a=>J(a,'은','는')+' 시간이 흐르면서 일정한 차례를 따라 달라지며, 그 달라짐에는 까닭이 있다.',
+        a=>J(a,'의','의')+' 달라진 모습을 견주어 보면 다음에 올 모습을 짐작할 수 있다.'],
+   cq:[a=>J(a,'은','는')+' 왜 그대로 있지 않고 달라지는가?',
+       a=>J(a,'의','의')+' 달라짐에는 어떤 차례가 있는가?'],
+   dq:[(a,ar)=>J(a,'의','의')+' 변화는 언제나 나아지는 쪽으로 일어나는가?']},
+
+  {n:'관계', re:/관계|영향을 주|상호|서로 연결|연계|더불어 살|사이의|의존|균형|어우러|따라 달라/,
+   B:'둘레의 환경', altB:'서로 이어진 것',
+   gen:[(a,b)=>J(a,'과','와')+' '+J(b,'은','는')+' 서로 맞물려 있어, 하나가 달라지면 다른 하나도 달라진다.',
+        (a,b)=>J(a,'과','와')+' '+J(b,'의','의')+' 관계를 알면 하나만 볼 때는 보이지 않던 것이 보인다.'],
+   cq:[(a,b)=>J(a,'이','가')+' 달라지면 '+J(b,'은','는')+' 어떻게 달라지는가?',
+       (a,b)=>J(a,'과','와')+' '+J(b,'은','는')+' 어떻게 서로 이어져 있는가?'],
+   dq:[(a,ar)=>J(a,'에','에')+' 가장 크게 영향을 주는 것은 무엇인가?']},
+
+  {n:'원인과 결과', re:/원인|결과|까닭|때문|영향을 미치|발생|왜 그런/,
+   B:'결과', altB:'뒤따르는 일', fixB:true,
+   gen:[a=>J(a,'이','가')+' 그렇게 되는 데에는 까닭이 있으며, 까닭을 알면 다음에 일어날 일을 짐작할 수 있다.',
+        a=>'같은 까닭이라도 조건이 달라지면 '+J(a,'의','의')+' 모습은 다르게 나타난다.'],
+   cq:[a=>J(a,'은','는')+' 어떤 까닭으로 일어나는가?',
+       a=>'조건을 바꾸면 '+J(a,'은','는')+' 어떻게 달라지는가?'],
+   dq:[(a,ar)=>J(a,'의','의')+' 결과에 대한 책임은 누구에게 있는가?']},
+
+  {n:'체계와 구조', re:/체계|구조|구성|조직|기관|계통|질서|짜임|절차|단계|차례|이루어져|둘러싸/,
+   B:'전체', altB:'짜임새', fixB:true,
+   gen:[a=>J(a,'은','는')+' 여러 부분이 짜임을 이루고 있으며, 각 부분은 저마다 맡은 몫이 있다.',
+        a=>'한 부분이 달라지면 '+J(a,'의','의')+' 전체 모습도 함께 달라진다.'],
+   cq:[a=>J(a,'은','는')+' 어떤 부분들로 이루어져 있는가?',
+       a=>'한 부분이 빠지면 '+J(a,'에','에')+' 무슨 일이 일어나는가?'],
+   dq:[(a,ar)=>J(a,'의','의')+' 짜임 가운데 무엇이 가장 중요한가?']},
+
+  {n:'형태와 기능', re:/모양|생김새|겉모습|구조를 관찰|분류|특징에 따라|성질을 이용|쓰임새/,
+   re2:/기능|하는 일|쓰임|용도|역할|분류|특징|성질/,
+   B:'하는 일', altB:'쓰임새', fixB:true,
+   gen:[a=>J(a,'의','의')+' 생김새와 성질은 그것이 하는 일과 맞닿아 있다.',
+        a=>'하는 일이 달라지면 그에 맞게 '+J(a,'의','의')+' 생김새와 성질도 달라진다.'],
+   cq:[a=>J(a,'의','의')+' 생김새는 하는 일과 어떻게 이어지는가?',
+       a=>'무엇을 기준으로 '+J(a,'을','를')+' 나눌 수 있는가?'],
+   dq:[(a,ar)=>J(a,'의','의')+' 생김새가 지금과 달랐다면 무엇이 달라졌을까?']},
+
+  {n:'패턴과 규칙', re:/규칙|패턴|반복|배열|계열|일정한|예측|법칙|어림|규칙성/,
+   B:'다음에 올 것', altB:'새로운 경우', fixB:true,
+   gen:[a=>J(a,'에는','에는')+' 되풀이되는 규칙이 있어, 규칙을 찾으면 다음을 짐작할 수 있다.',
+        a=>'규칙을 말이나 식으로 나타내면 새로운 경우에도 그대로 쓸 수 있다.'],
+   cq:[a=>a+'에서 되풀이되는 규칙은 무엇인가?',
+       a=>'찾은 규칙은 다른 경우에도 그대로 들어맞는가?'],
+   dq:[(a,ar)=>J(a,'의','의')+' 규칙은 언제나 들어맞는가?']},
+
+  {n:'관점', re:/관점|입장|의견|해석|다양성|편견|존중|차이|서로 다른|까닭을 들어|짐작하/,
+   B:'겪은 일', altB:'서로 다른 자리', fixB:true,
+   gen:[a=>'같은 '+a+'도 보는 사람의 자리와 겪은 일에 따라 다르게 읽힌다.',
+        a=>'서로 다르게 보는 까닭을 알면 나와 다른 생각도 헤아릴 수 있다.'],
+   cq:[a=>'같은 '+J(a,'을','를')+' 사람마다 다르게 보는 까닭은 무엇인가?',
+       a=>'어떤 근거가 있을 때 그 생각을 받아들일 만한가?'],
+   dq:[(a,ar)=>(ar||a)+'에 대한 서로 다른 생각 가운데 무엇이 더 그럴듯한가?']},
+
+  {n:'소통', re:/듣고|말하|대화|의사소통|발표|토의|토론|매체|전달|나누며|주고받|묻고/,
+   B:'상황', altB:'듣는 이', fixB:true,
+   gen:[(a,b)=>J(a,'은','는')+' 말하는 이와 듣는 이가 놓인 '+J(b,'에','에')+' 따라 달라진다.',
+        (a,b)=>'상대를 헤아리며 주고받을 때 뜻이 온전히 전해진다.'],
+   cq:[(a,b)=>J(a,'은','는')+' '+J(b,'에','에')+' 따라 어떻게 달라지는가?',
+       (a,b)=>'뜻이 잘 전해지지 않을 때 무엇을 고쳐야 하는가?'],
+   dq:[(a,ar)=>(ar||a)+'에서 가장 지켜야 할 약속은 무엇인가?']},
+
+  {n:'표현', re:/표현|창작|감상|작품|노래|연주|그리|만들|상상|아름다움|꾸미|나타내/,
+   B:'생각과 느낌', altB:'나타내는 방법', fixB:true,
+   gen:[a=>'생각과 느낌은 '+J(a,'을','를')+' 통해 드러나며, 어떻게 나타내느냐가 곧 뜻의 한 부분이 된다.',
+        a=>'같은 생각도 '+J(a,'을','를')+' 달리하면 받는 느낌이 달라진다.'],
+   cq:[a=>J(a,'을','를')+' 달리하면 전해지는 느낌은 어떻게 달라지는가?',
+       a=>'무엇을 보고 만든 이의 생각을 읽어 낼 수 있는가?'],
+   dq:[(a,ar)=>'좋은 '+J(ar||a,'이란','란')+' 무엇으로 가릴 수 있는가?']},
+
+  {n:'책임과 실천', re:/실천|참여|태도|노력|지속가능|보호|안전|권리|배려|봉사|시민|지키|아끼|돌보/,
+   B:'생활', altB:'날마다의 삶', fixB:true,
+   gen:[a=>J(a,'은','는')+' 아는 데서 그치지 않고 생활에서 실천할 때 비로소 뜻을 갖는다.',
+        a=>'작은 실천이 쌓이면 나와 둘레의 삶이 달라진다.'],
+   cq:[a=>J(a,'은','는')+' 왜 지켜야 하는가?',
+       a=>J(a,'을','를')+' 실천하기 어려운 까닭은 무엇인가?'],
+   dq:[(a,ar)=>(ar||a)+'에서 우리가 지금 실천할 수 있는 일은 무엇인가?']},
+];
+/* 교과 성격에 맞지 않는 렌즈는 아예 후보에서 뺀다.
+   과학 성취기준에 '관점'이나 '소통' 렌즈가 붙으면 문장이 통째로 헛말이 된다. */
+const SUBJLENSOK={
+  '국어':['소통','표현','관점','관계','체계와 구조','책임과 실천','변화','원인과 결과'],
+  '수학':['패턴과 규칙','관계','체계와 구조','변화','형태와 기능','원인과 결과'],
+  '사회':['관계','변화','원인과 결과','관점','책임과 실천','체계와 구조'],
+  '과학':['변화','관계','원인과 결과','체계와 구조','형태와 기능','패턴과 규칙','책임과 실천'],
+  '도덕':['책임과 실천','관점','관계','변화'],
+  '체육':['체계와 구조','책임과 실천','관계','변화','원인과 결과'],
+  '음악':['표현','관계','형태와 기능','변화','체계와 구조'],
+  '미술':['표현','관점','관계','형태와 기능','변화'],
+  '영어':['소통','표현','관계','체계와 구조'],
+  '실과':['형태와 기능','책임과 실천','체계와 구조','관계','원인과 결과','변화'],
+  '바른 생활':['책임과 실천','관계','관점','변화'],
+  '슬기로운 생활':['형태와 기능','관계','변화','원인과 결과','체계와 구조'],
+  '즐거운 생활':['표현','관계','책임과 실천'],
+};
+/* 영역마다 결이 다르다. 성취기준 낱말로 가려지지 않을 때 여기에 기댄다. */
+const DOMLENS={
+  '체육|운동':'체계와 구조', '체육|스포츠':'관계', '체육|표현':'표현',
+  '과학|운동과 에너지':'원인과 결과', '과학|물질':'형태와 기능', '과학|생명':'체계와 구조',
+  '과학|지구와 우주':'체계와 구조', '과학|과학과 사회':'책임과 실천',
+  '사회|자연환경과 인간생활':'관계', '사회|인문환경과 인간생활':'관계',
+  '사회|지속가능한 세계':'책임과 실천', '사회|정치':'체계와 구조', '사회|법':'체계와 구조',
+  '사회|경제':'관계', '사회|사회·문화':'관점', '사회|역사 일반':'변화',
+  '사회|지역사':'변화', '사회|한국사':'변화', '사회|지리 인식':'관계',
+  '수학|수와 연산':'패턴과 규칙', '수학|변화와 관계':'관계',
+  '수학|도형과 측정':'형태와 기능', '수학|자료와 가능성':'패턴과 규칙',
+  '국어|듣기·말하기':'소통', '국어|읽기':'관점', '국어|쓰기':'표현',
+  '국어|문법':'체계와 구조', '국어|문학':'표현', '국어|매체':'소통',
+};
+const SUBJLENS={'국어':'소통','수학':'패턴과 규칙','사회':'관계','과학':'체계와 구조','도덕':'책임과 실천',
+  '체육':'형태와 기능','음악':'표현','미술':'표현','영어':'소통','실과':'형태와 기능',
+  '바른 생활':'책임과 실천','슬기로운 생활':'형태와 기능','즐거운 생활':'표현'};
+function lensOf(r){
+  if(r._lens) return r._lens;
+  const w=[[r.t,5],[r.hae||'',2]];
+  const ok=SUBJLENSOK[r.subj];
+  // 글자·맞춤법 같은 기초 기능은 규칙의 문제다
+  if(/자모|소릿값|소리 내어|띄어 읽|맞춤법|문장 부호|표기가 다|바르게 쓴다|정확하게 소리/.test(r.t)){
+    const Lb=LENSES.find(L=>L.n==='체계와 구조');
+    if(Lb && (!SUBJLENSOK[r.subj] || SUBJLENSOK[r.subj].indexOf('체계와 구조')>=0)) return r._lens=Lb;
+  }
+  // 성취기준이 대놓고 까닭을 묻는다면 렌즈는 정해진 것이나 다름없다
+  if(/원인|이유|까닭|때문|왜 그러|영향을 미치/.test(r.t)){
+    const L0=LENSES.find(L=>L.n==='원인과 결과');
+    if(L0 && (!ok || ok.indexOf('원인과 결과')>=0)) return r._lens=L0;
+  }
+  let best=null, bs=0;
+  for(const L of LENSES){
+    if(ok && ok.indexOf(L.n)<0) continue;
+    let sc=0;
+    w.forEach(p=>{ const m=(p[0]||'').match(L.re); if(m) sc+=m.length*p[1]; });
+    // 짝이 되는 말이 함께 있어야 성립하는 렌즈가 있다(형태 ↔ 기능)
+    if(L.re2){ if(!L.re2.test(w.map(p=>p[0]).join(' '))) sc=0; }
+    if(sc>bs){ best=L; bs=sc; }
+  }
+  if(!best){
+    const dm=domOf(r);
+    const key=r.subj+'|'+(dm?dm.name:'');
+    const nm=DOMLENS[key] || SUBJLENS[r.subj] || '관계';
+    best=LENSES.find(L=>L.n===nm)||LENSES[1];
+  }
+  return r._lens=best;
+}
+/* 영속적 이해: 그 영역의 핵심 아이디어 가운데 이 성취기준과 가장 가까운 원문 문장 */
+function enduringOf(r){
+  if(r._end!==undefined) return r._end;
+  const d=domOf(r);
+  if(!d||!d.idea||!d.idea.length) return r._end=null;
+  /* 영역 안 모든 핵심 아이디어에 두루 나오는 말('지구와 우주'의 '지구' 같은)은
+     가려내는 힘이 없다. 절반 넘게 나오는 말은 빼고 견준다. */
+  if(!d._common){
+    const cnt={};
+    d.idea.forEach(x=>{ const seen=new Set();
+      (x.match(/[가-힣]{2,}/g)||[]).forEach(w=>{
+        for(let n=2;n<=Math.min(4,w.length);n++) for(let j=0;j+n<=w.length;j++) seen.add(w.slice(j,j+n));
+      });
+      seen.forEach(w=>cnt[w]=(cnt[w]||0)+1); });
+    d._common=new Set(Object.keys(cnt).filter(w=>cnt[w] > d.idea.length/2));
+  }
+  const sibs=STD.filter(o=>o.s===r.s&&o.b===r.b&&o.a===r.a).map(o=>o.t).join(' ');
+  const ct=contentOf(r)||{};
+  const bag=r.t+' '+(r.hae||'')+' '+((guideOf(r)||[]).join(' '))+' '+sibs+' '
+          + CATS.map(c=>(ct[c]||[]).join(' ')).join(' ');
+  // 성취기준 쪽 낱말 조각 (영역 공통어는 뺀다)
+  const keys=new Set();
+  ((r.t+' '+(r.a||'')+' '+(r.hae||'')).match(/[가-힣]{2,}/g)||[]).forEach(w=>{
+    for(let n=2;n<=Math.min(4,w.length);n++) for(let j=0;j+n<=w.length;j++){
+      const s=w.slice(j,j+n); if(!d._common.has(s)) keys.add(s); } });
+  const V=vecOfText(bag);
+  const scored=d.idea.map(x=>{
+    let ov=0; keys.forEach(k=>{ if(x.includes(k)) ov += (k.length>=3? 1 : 0.4); });
+    return {t:x, ov:ov, cs:cos(V, vecOfText(x))};
+  }).sort((a,b)=> (b.ov-a.ov) || (b.cs-a.cs));
+  const top=scored[0];
+  // 겹치는 말이 없으면 이 영역에 딱 맞는 문장이 없다는 뜻이다. 단정하지 않는다.
+  const weak = top.ov < 1.2;
+  return r._end={text:top.t, all:d.idea, domain:d.name, weak:weak,
+    others:scored.slice(1,3).filter(z=>z.ov>=1.2).map(z=>z.t), sub:subPick(r)};
+}
+/* 일반화에 쓸 개념 짝을 고른다.
+   A는 될 수 있으면 실체를 가리키는 말, B는 A와 겹치지 않는 다른 개념. */
+function pickPair(cons, L, fallback){
+  const solid = cons.filter(x=>!ABSTRACT.test(x));
+  const A = solid[0] || cons[0] || fallback;
+  const clash=(x,y)=>!x||!y||x===y||x.includes(y)||y.includes(x);
+  let B = '';
+  if(!L.fixB) B = solid.find(x=>!clash(x,A)) || '';
+  if(!B) B = clash(L.B,A) ? (L.altB||L.B) : L.B;
+  if(clash(A,B)){
+    const A2 = solid.find(x=>!clash(x,B)) || cons.find(x=>!clash(x,B));
+    if(A2) return [A2, B];
+  }
+  return [A, B];
+}
+
+/* ---------- 일반화 문장 만들기 ----------
+   틀에 개념만 갈아 끼우면 611개가 스무 가지 문장으로 찍혀 나온다.
+   교육과정 원문에 이미 알맹이가 있으니 그것을 먼저 쓴다. */
+
+/* 한글 종성 붙이기 ('생기' + ㄴ -> '생긴') */
+function addJong(ch, j){
+  const c=ch.charCodeAt(0);
+  if(c<0xAC00||c>0xD7A3) return ch;
+  if((c-0xAC00)%28!==0) return ch;
+  return String.fromCharCode(c+j);
+}
+/* '~생김을 이해하게 한다' -> '~생긴다' 처럼 이름꼴을 풀이꼴로 되돌린다 */
+function toStatement(t){
+  let x=(t||'').replace(/\s+/g,' ').trim().replace(/[.]+$/,'');
+  // 뒤에 붙은 지도 지시를 걷어 낸다
+  x=x.replace(/([가-힣])ㅁ?을\s*(이해하게|알게|알도록|이해하도록|깨닫게|인식하게)\s*한다$/, '$1');
+  x=x.replace(/\s*(음|임|함|됨|김|남|짐)을\s*(이해하게|알게|알도록|이해하도록|깨닫게|인식하게|파악하게)\s*한다$/, '\u0001$1');
+  const m=x.match(/^(.*)\u0001(음|임|함|됨|김|남|짐)$/);
+  if(m){
+    const head=m[1], kind=m[2];
+    if(kind==='임') return head+'이다';
+    if(kind==='음') return head+'다';
+    // 함/됨/김/남/짐 -> 하 /되 /기 /나 /지 + ㄴ다
+    const stem={'함':'하','됨':'되','김':'기','남':'나','짐':'지'}[kind];
+    return head + addJong(stem, 4) + '다';
+  }
+  x=x.replace(/\u0001/g,'');
+  return x;
+}
+/* 지도 방법을 이르는 문장인지 (일반화로 쓸 수 없다) */
+const TEACHY=/(지도|유의|다루지 않|다룬다|다루고|다루며|중심으로|초점을|중점을|주안점|활동에|활동을|제시하|평가하|차시|교사|학생들이|설명하지 않|설정하|설정한|취지는)/;
+/* 명제로 읽히는 문장인지 */
+const CLAIMY=/(때문에|므로|으로써|에 따라|하면|이면|면서|관계가|영향을|까닭|원인|덕분에|덕에|나타난다|달라진다|이루어진다|생긴다|필요하다)/;
+
+/* 해설에서 일반화로 쓸 만한 문장을 고른다 */
+function genFromHae(r){
+  if(!r.hae) return null;
+  let t=r.hae.replace(/^\[[^\]]+\]\s*/,'');
+  const sents=t.split(/(?<=[.])\s+/).map(x=>x.trim()).filter(Boolean);
+  let best=null, bs=0;
+  sents.forEach(st=>{
+    if(st.length<18 || st.length>120) return;
+    if(TEACHY.test(st)) return;
+    if(/^이 성취기준은/.test(st)) return;
+    if(/^(은|는|이|가|을|를|와|과|도|만|의|에|로|며|고)\s/.test(st)) return;   // 앞이 잘린 조각
+    if(/^[가-힣]{1,2}\s/.test(st) && /^(은|는|이|가|을|를)/.test(st)) return;
+    if(!CLAIMY.test(st)) return;              // 까닭·조건을 말하지 않으면 일반화가 아니다
+    let sc=3;
+    if(/(이해하게 한다|알게 한다|이해하도록 한다|파악하게 한다|아는 데 중점을 둔다)$/.test(st)) sc+=2;
+    if(st.length<=80) sc+=1;
+    if(sc>bs){ bs=sc; best=st; }
+  });
+  if(!best || bs<3) return null;
+  let out=toStatement(best);
+  out=out.replace(/(하는 데 중점을 둔다|에 중점을 둔다|에 초점을 맞춘다|에 주안점을 둔다)$/,'');
+  out=out.replace(/\s*(등을 학습한다|을 학습한다|를 학습한다)$/,'');
+  out=out.replace(/\s*(하도록 한다|하게 한다|할 수 있도록 한다)$/,'한다');
+  out=out.replace(/\s+/g,' ').trim();
+  if(out.length<16) return null;
+  if(!/[다]$/.test(out)) return null;
+  if(TEACHY.test(out)) return null;            // 다듬고 나서도 지도 지침이면 쓰지 않는다
+  if(/(하도록 한다|하게 한다|않는다|않으며|않고)$/.test(out)) return null;
+  return out;
+}
+
+/* 성취기준에서 까닭·수단·조건 구를 뽑는다 */
+function causeOf(r){
+  const t=(r.t||'').replace(/\s+/g,' ');
+  const tidy=x=>{
+    x=(x||'').trim().replace(/^(그|이|저)\s+/,'');
+    x=x.replace(/\s*(것|점|일)$/,'');
+    return x.trim();
+  };
+  let m=t.match(/원인을\s*(.+?)(?:으로|로)\s*설명/);            if(m) return {k:'cause', v:tidy(m[1])};
+  m=t.match(/^(.+?)(?:을|를)\s*알고,?\s*.*(?:생기는|나타나는|일어나는)\s*(?:원인|이유|까닭)/);
+  if(m) return {k:'cause', v:tidy(m[1])};
+
+  m=t.match(/이유를\s*(.+?)(?:으로|로)\s*설명/);                if(m) return {k:'cause', v:tidy(m[1])};
+  m=t.match(/(.+?)(?:으로|로)\s*(?:인해|말미암아)/);             if(m) return {k:'cause', v:tidy(m[1])};
+  m=t.match(/(.+?)에\s*따라\s*(?:달라지|변하|나타나)/);         if(m) return {k:'cond',  v:tidy(m[1])};
+  return null;
+}
+/* '~하는' 꼴을 '~하기' 꼴로 (문장에 넣기 좋게) */
+function asNounPhrase(x){
+  x=(x||'').trim();
+  x=x.replace(/(하는|되는|지는|나는|오는|가는|주는)$/, m=>({'하는':'하기','되는':'되기','지는':'지기',
+      '나는':'나기','오는':'오기','가는':'가기','주는':'주기'}[m]));
+  return x;
+}
+
+
+/* 같은 렌즈라도 다루는 대상이 다르면 할 말이 다르다.
+   한 문장으로 스물 몇 개를 찍어 내지 않도록 갈래를 둔다. */
+const GENVAR={
+  '표현':[
+    [/움직임|동작|몸짓|신체|무용|춤|율동/,
+      a=>'생각과 느낌은 '+J(a,'으로','로')+' 몸을 통해 드러나며, 같은 마음도 몸짓을 달리하면 다르게 전해진다.'],
+    [/글|쓰기|문장|편지|기록|일기|설명|주장/, a=>J(a,'은','는')+' 무엇을 어떻게 쓰느냐에 따라 읽는 이에게 다르게 다가간다.'],
+    [/작품|시|노래|이야기|동화|문학|낭송/,    a=>J(a,'은','는')+' 읽는 이가 겪은 일과 만나 저마다 다른 느낌으로 되살아난다.'],
+    [/그림|만들|꾸미|디자인|조형|색|형태/,    a=>'생각과 느낌은 '+J(a,'으로','로')+' 눈에 보이게 드러나며, 재료와 방법을 달리하면 느낌도 달라진다.'],
+    [/노래|악기|연주|리듬|가락|음악/,          a=>'생각과 느낌은 '+J(a,'을','를')+' 통해 소리로 드러나며, 어떻게 소리 내느냐가 곧 뜻이 된다.'],
+  ],
+  '관점':[
+    [/인물|주인공|등장/,  a=>'같은 '+a+'도 읽는 이가 살아온 자리에 따라 다르게 이해된다.'],
+    [/글|매체|자료|기사/, a=>'같은 '+J(a,'이라도','라도')+' 누가 왜 읽느냐에 따라 읽어 내는 것이 달라진다.'],
+    [/의견|주장|생각/,    a=>J(a,'은','는')+' 그것을 받치는 까닭과 함께 놓일 때 비로소 견주어 볼 수 있다.'],
+  ],
+  '소통':[
+    [/듣고 말|말하고 듣|주고받|대화|묻고 답하|토의|토론/,
+      a=>J(a,'은','는')+' 한쪽이 일방적으로 전하는 것이 아니라, 서로 주고받는 가운데 또렷해진다.'],
+    [/듣기|듣고/,        a=>J(a,'은','는')+' 말하는 이의 뜻을 헤아리며 들을 때 온전히 전해진다.'],
+    [/발표|말하기|말한/, a=>J(a,'은','는')+' 듣는 이가 누구인지에 따라 고르는 말과 차례가 달라진다.'],
+    [/매체|누리집|영상/, a=>J(a,'은','는')+' 어떤 매체에 담기느냐에 따라 전해지는 바가 달라진다.'],
+  ],
+  '체계와 구조':[
+    [/움직임|동작|기술|자세|기능을 수행|운동/,
+      a=>J(a,'은','는')+' 여러 동작이 이어져 하나의 흐름을 이루며, 상황에 맞게 골라 쓸 때 제 몫을 한다.'],
+    [/체력|건강|신체/,
+      a=>J(a,'은','는')+' 한 번에 길러지지 않고, 알맞은 운동을 꾸준히 되풀이할 때 조금씩 나아진다.'],
+    [/자모|글자|낱말|단어|맞춤법|표기|문장 부호/,
+      a=>J(a,'은','는')+' 정해진 규칙에 따라 짜여 있어, 그 규칙을 알면 바르게 읽고 쓸 수 있다.'],
+    [/기관|몸|계통|생물/, a=>J(a,'은','는')+' 여러 부분이 서로 이어져 하나로 움직이며, 한 부분이 맡은 일을 못 하면 전체가 흔들린다.'],
+  ],
+  '변화':[
+    [/역사|시대|과거|옛/, a=>J(a,'은','는')+' 그때의 형편과 사람들의 선택이 쌓여 오늘의 모습이 되었다.'],
+  ],
+  '책임과 실천':[
+    [/흥미|관심|즐겨|즐기|좋아하|호기심/,
+      a=>J(a,'을','를')+' 즐기는 마음은 시켜서 생기지 않고, 스스로 해 보며 조금씩 자란다.'],
+    [/환경|생태|자원|기후/, a=>J(a,'을','를')+' 지키는 일은 한 사람의 마음가짐에서 비롯되어 여럿의 실천으로 이어진다.'],
+    [/안전|위험|예방/,      a=>J(a,'은','는')+' 미리 알고 몸에 익혀 두어야 위급할 때 몸이 먼저 움직인다.'],
+  ],
+};
+function genVariant(L, A, hint){
+  const list=GENVAR[L.n]; if(!list) return '';
+  for(const v of list){ if(v[0].test(hint)) return v[1](A); }
+  return '';
+}
+
+function cbi(r){
+  if(r._cbi) return r._cbi;
+  const cons=conceptsOf(r,5);
+  const L=lensOf(r);
+  const ct=contentOf(r)||{};
+  const own=r.t+' '+(r.hae||'');
+  const pick=list=>(list||[]).filter(usable).filter(x=>relatedTo(x,own));
+  const know=pick(ct['지식·이해']), skill=pick(ct['과정·기능']), val=pick(ct['가치·태도']);
+  const knowAll=(ct['지식·이해']||[]).filter(usable);
+  const act=lessonTitle(r);
+  let area=r.a || areaKeyOf(r);
+  if(/[?？]$|까$/.test(area)) area='이 단원';
+  const pr=pickPair(cons, L, areaKeyOf(r)), A=pr[0], B=pr[1];
+
+  /* 일반화 — 원문에 알맹이가 있으면 그것을 먼저 쓴다 */
+  const gen=[], genSrc=[];
+  const fromHae=genFromHae(r);
+  if(fromHae){ gen.push(fromHae); genSrc.push('해설'); }
+  const cz=causeOf(r);
+  if(cz && cz.v && cz.v.length>=4 && cz.v.length<=42
+     && cz.v.replace(/\s/g,'')!==A.replace(/\s/g,'')
+     && !cz.v.replace(/\s/g,'').includes(A.replace(/\s/g,''))){
+    const v=asNounPhrase(cz.v);
+    let line='';
+    if(cz.k==='cause') line=J(A,'은','는')+' '+v+' 때문에 일어난다.';
+    else if(cz.k==='cond') line=J(A,'은','는')+' '+J(v,'에','에')+' 따라 달라진다.';
+    else {
+      const va=v.replace(/\s/g,''), aa=A.replace(/\s/g,'');
+      line=(va===aa||va.includes(aa)||aa.includes(va)) ? ''
+         : J(v,'을','를')+' 살펴보면 '+J(A,'을','를')+' 더 또렷이 알 수 있다.';
+    }
+    if(line && !gen.some(g=>g===line)){ gen.push(line); genSrc.push('성취기준'); }
+  }
+  const hint=A+' '+(r.a||'')+' '+r.t;
+  if(gen.length<2){
+    const vr=genVariant(L, A, hint);
+    if(vr && !gen.some(g=>g===vr)){ gen.push(vr); genSrc.push('렌즈'); }
+  }
+  while(gen.length<2){
+    const cand=L.gen[gen.length===0?0:1](A,B);
+    if(gen.some(g=>g===cand)) break;
+    gen.push(cand); genSrc.push('렌즈');
+  }
+  if(val.length && gen.length<3){
+    gen.push(J(elemNoun(val[0]),'은','는')
+      + (area.length<=10 ? ' '+J(area,'을','를')+' 배우는 내내' : ' 이 배움 내내') + ' 길러진다.');
+    genSrc.push('내용 요소');
+  }
+
+  /* 탐구 질문 */
+  const fact=[J(A,'은','는')+' 무엇인가?'];
+  const k0=know[0]||knowAll[0];
+  if(k0) fact.push(/[?？]$/.test(k0) ? '“'+k0+'”'
+                                     : J(elemNoun(k0),'에는','에는')+' 어떤 것들이 있는가?');
+  const k1=know[1]||knowAll[1];
+  if(B && B!==A && cons.indexOf(B)>=0) fact.push(J(B,'은','는')+' 무엇인가?');
+  else if(k1 && !/[?？]$/.test(k1)) fact.push(J(elemNoun(k1),'은','는')+' 어떠한가?');
+  else fact.push(J(A,'은','는')+' 어디에서 찾아볼 수 있는가?');
+
+  const conc=[L.cq[0](A,B), L.cq[1](A,B)];
+  if(skill.length) conc.push(elemAct(skill[0])+' 활동에서는 무엇을 눈여겨보아야 하는가?');
+
+  const deb=[L.dq[0](A, area)];
+  if(val.length) deb.push(J(elemNoun(val[0]),'은','는')+' 왜 필요한가?');
+  else deb.push(area+'에서 '+J(A,'은','는')+' 얼마나 중요한가?');
+
+  const tidy=x=>(x||'').replace(/\s+/g,' ').replace(/\s+([,.?!])/g,'$1').trim();
+  [gen,fact,conc,deb].forEach(arr=>{ for(let i=0;i<arr.length;i++) arr[i]=tidy(arr[i]); });
+  const hit=(r.t.match(L.re)||[])[0];
+  return r._cbi={lens:L.n,
+    lensWhy: hit? "성취기준의 '"+hit+"'에 기대어 골랐습니다" : r.subj+'과에서 자주 쓰이는 렌즈입니다',
+    concepts:cons, pair:[A,B], gen, genSrc:genSrc, q:{fact:fact, conc:conc, deb:deb},
+    enduring:enduringOf(r), content:ct, activity:act};
+}
+
+/* ---------- 연관 / 위계 ---------- */
+function scopeFilter(r,o,mode){
+  if(mode==='bandCross') return o.b===r.b && o.s!==r.s;
+  if(mode==='band')      return o.b===r.b;
+  if(mode==='subject')   return o.s===r.s;
+  return true;
+}
+function similar(r,mode,catOnly){
+  const out=[];
+  for(const o of STD){
+    if(o===r||!scopeFilter(r,o,mode)) continue;
+    if(catOnly&&mainCat(o)!==catOnly) continue;
+    const d=cos(r._v,o._v);
+    if(d>0.04) out.push({o,s:d});
+  }
+  out.sort((a,b)=>b.s-a.s);
+  return out.slice(0,14);
+}
+function commonKw(a,b){
+  const arr=[];
+  for(const [t,w] of a._v){ const u=b._v.get(t); if(u) arr.push([t,w*u]); }
+  arr.sort((x,y)=>y[1]-x[1]);
+  const out=[];
+  for(const [t] of arr){
+    if(DF.get(t)>N*0.06) continue;
+    const i=out.findIndex(o=>o.startsWith(t)||t.startsWith(o));
+    if(i>=0){ if(t.length>out[i].length) out[i]=t; continue; }
+    out.push(t); if(out.length>=5) break;
+  }
+  return out;
+}
+const SERIES=new Map();
+function buildSeries(){ STD.forEach(r=>{ if(r.sr){ if(!SERIES.has(r.sr)) SERIES.set(r.sr,[]); SERIES.get(r.sr).push(r); } }); }
+const seriesOf = r => r.sr? SERIES.get(r.sr) : null;
+function seqGuess(r,band){
+  return STD.filter(o=>o.s===r.s&&o.b===band).map(o=>({o,s:cos(r._v,o._v)}))
+    .filter(x=>x.s>0.08).sort((a,b)=>b.s-a.s).slice(0,3);
+}
+
+/* ---------- 검색 ---------- */
+function splitCandidates(t){
+  const n=t.length,res=[];
+  if(n<4||n>14) return res;
+  for(let i=2;i<=n-2;i++){ res.push([t.slice(0,i),t.slice(i)]);
+    for(let j=i+2;j<=n-2;j++) res.push([t.slice(0,i),t.slice(i,j),t.slice(j)]); }
+  return res;
+}
+function scoreIn(hay,t,hit){
+  if(hay.includes(t)){ hit&&hit.add(t); return 2; }
+  for(const p of splitCandidates(t)) if(p.every(x=>hay.includes(x))){ hit&&p.forEach(x=>hit.add(x)); return 1; }
+  return 0;
+}
+function greedyPieces(t){
+  if(ALLTEXT===null) ALLTEXT=STD.map(r=>r._head+r._body).join('');
+  const res=[]; let i=0;
+  while(i<t.length){ let best='';
+    for(let len=Math.min(9,t.length-i);len>=2;len--){ const p=t.slice(i,i+len); if(ALLTEXT.includes(p)){ best=p; break; } }
+    if(best){ res.push(best); i+=best.length; } else i++; }
+  return res;
+}
+let HILITE=[], RELAX=null;
+/* 학년군·교과·영역을 고른 채 검색하면 그 범위 안에서만 찾는다.
+   범위 밖에 걸리는 것이 있는지 알려 주어야 '왜 안 나오지' 하는 일이 없다. */
+function searchAllScope(){
+  const b=new Set(S.bands), s=new Set(S.subjs), a=new Set(S.areas);
+  S.bands.clear(); S.subjs.clear(); S.areas.clear();
+  let out=[];
+  try{ out=filtered(); } finally {
+    b.forEach(x=>S.bands.add(x)); s.forEach(x=>S.subjs.add(x)); a.forEach(x=>S.areas.add(x));
+  }
+  return out;
+}
+function filtered(){
+  const raw=S.q.trim();
+  const base=STD.filter(r=>
+    (!S.bands.size||S.bands.has(r.b)) && (!S.subjs.size||S.subjs.has(r.s)) && (!S.areas.size||S.areas.has(r.subj+'|'+areaKeyOf(r))));
+  HILITE=[]; RELAX=null;
+  if(!raw) return base;
+  if(isChoQuery(raw)){ const c=raw.replace(/\s+/g,''); return base.filter(r=>r._cho.includes(c)); }
+  const terms=raw.split(/\s+/).map(norm).filter(Boolean);
+  if(!terms.length) return base;
+  const hits=new Set(), out=[];
+  for(const r of base){
+    let sc=0,ok=true,inBody=false;
+    for(const t of terms){
+      const h=scoreIn(r._head,t,hits), b=h?0:scoreIn(r._body,t,hits);
+      if(!h&&!b){ ok=false; break; }
+      sc+= h? h*2:b; if(!h) inBody=true;
+    }
+    if(ok){ r._sc=sc; r._inBody=inBody; out.push(r); }
+  }
+  if(!out.length){
+    const ps=[...new Set(terms.flatMap(greedyPieces))].filter(p=>p.length>=2);
+    if(ps.length&&!(ps.length===1&&ps[0]===terms[0])){
+      RELAX=ps;
+      for(const r of base){ let sc=0,inBody=false;
+        for(const p of ps){ if(r._head.includes(p)){ sc+=4; hits.add(p); }
+          else if(r._body.includes(p)){ sc+=1; inBody=true; hits.add(p); } }
+        if(sc>0){ r._sc=sc; r._inBody=inBody; out.push(r); } }
+    }
+  }
+  HILITE=[...hits];
+  if(S.sort==='rel') out.sort((a,b)=>b._sc-a._sc||a.b-b.b||a.s-b.s||(a.c<b.c?-1:1));
+  return out;
+}
+function hl(text,terms){
+  const frag=document.createDocumentFragment();
+  text=text||'';
+  if(!terms||!terms.length){ frag.appendChild(document.createTextNode(text)); return frag; }
+  const map=[]; let n='';
+  for(let i=0;i<text.length;i++){ const c=norm(text[i]); if(c){ n+=c; for(let k=0;k<c.length;k++) map.push(i); } }
+  const marks=new Array(text.length).fill(false);
+  terms.forEach(t=>{ let p=0; while(t&&(p=n.indexOf(t,p))>=0){ for(let k=p;k<p+t.length;k++) marks[map[k]]=true; p+=t.length; } });
+  let buf='',on=false;
+  const flush=()=>{ if(!buf) return; frag.appendChild(on? el('mark',null,buf):document.createTextNode(buf)); buf=''; };
+  for(let i=0;i<text.length;i++){ if(marks[i]!==on){ flush(); on=marks[i]; } buf+=text[i]; }
+  flush(); return frag;
+}
+
+/* ============================================================
+   수업·평가 계획 초안 (AI 생성 — 반드시 교사 검토)
+   ============================================================ */
+/* 성취기준이 속한 '영역' — 내용 체계 영역을 우선한다 (사용자가 고른 값 포함) */
+const areaKeyOf = r => domName(r) || r.a;
+
+/* ---------- 성취기준을 '~하기' 꼴 활동 이름으로 다듬기 ----------
+   정보공시 '교수·학습 내용' 칸에 그대로 쓰는 값이라 자르지 않고 한 문구로 만든다. */
+function stripJong(ch){                      // '할' -> '하'
+  const c=ch.charCodeAt(0);
+  if(c<0xAC00||c>0xD7A3) return ch;
+  const j=(c-0xAC00)%28;
+  return j? String.fromCharCode(c-j) : ch;
+}
+/* 어간이 본디 'ㄹ'로 끝나는 풀이씨 — 받침을 지우면 안 된다 */
+const LKEEP=/(만들|들|알|살|열|팔|놀|걸|물|밀|길|빌|풀|줄|늘|썰|졸|불)$/;
+function toActivity(t){
+  let x=(t||'').trim().replace(/[.\s]+$/,'');
+  // ① '~ㄹ/을 수 있다'
+  let m=x.match(/^(.*?)([가-힣])\s*수\s*있다$/);
+  if(m){
+    let head=m[1], last=m[2];
+    if(/을$/.test(last)) return head.replace(/\s+$/,'')+'기';          // 찾을 수 있다 -> 찾기
+    const stem=(head+last).replace(/\s+$/,'');
+    if(LKEEP.test(stem)) return stem+'기';                             // 만들 수 있다 -> 만들기
+    return head+stripJong(last)+'기';                                  // 할/볼/쓸 -> 하기/보기/쓰기
+  }
+  // ② '~는다' / '~ㄴ다'
+  if(/는다$/.test(x)) return x.replace(/는다$/,'')+'기';               // 읽는다 -> 읽기
+  m=x.match(/^(.*?)([가-힣])다$/);
+  if(m){
+    const last=m[2], c=last.charCodeAt(0), j=(c>=0xAC00&&c<=0xD7A3)?((c-0xAC00)%28):0;
+    if(j===4){                                                          // 종성 'ㄴ'
+      const stem=m[1]+stripJong(last);
+      if(/보$/.test(stem)) return stem+'기';                            // 본다 -> 보기
+      return stem+'기';                                                 // 한다/기른다/가진다 -> 하기/기르기/가지기
+    }
+    if(/[았었]$/.test(last)) return x;
+  }
+  // ③ 그밖에 '~다'로 끝나면 '기'로
+  if(/다$/.test(x)) return x.replace(/다$/,'')+'기';
+  return x;
+}
+/* 정보공시 칸 문구 — 자르지 않고, 길면 앞쪽 조건·도구 수식만 덜어 낸다 */
+const TRIM=[
+  /^[^,]{2,26}?(?:을|를)\s*(?:통해|통하여|활용하여|이용하여|바탕으로|중심으로)\s+/,
+  /^[^,]{2,26}?(?:와|과)\s*(?:연결하여|관련지어|비교하여)\s+/,
+  /^[^,]{2,22}?(?:으로|로)\s+/,
+  /^[^,]{2,22}?에서\s+/,
+];
+function lessonTitle(r){
+  let x=toActivity(r.t);
+  for(const re of TRIM){
+    if(x.length<=46) break;
+    const y=x.replace(re,'');
+    if(y.length>=12 && y!==x) x=y;
+  }
+  return x;
+}
+/* 정보공시 '단원명(교수·학습 내용)' 칸에 쓰는 서술.
+   성취기준만 옮기면 한 문장짜리가 많아 무엇을 가르치는지 드러나지 않는다.
+   그 학년군 내용 요소를 앞뒤에 붙여, 가르칠 내용이 보이도록 풀어 쓴다. */
+const LEAD_CUT=/^(간단한|다양한|여러 가지|여러|기본적인|알맞은|적절한)\s+/;
+function teachContent(r){
+  if(r._tc) return r._tc;
+  let full=toActivity((r.t||'').trim());
+  // 성취수준 B는 성취기준을 '무엇을 어느 만큼' 하는지로 풀어 쓴 원문이다.
+  // 성취기준보다 자세하면 그쪽을 뼈대로 삼아야 가르칠 내용이 드러난다.
+  if(r.B){
+    const b2=toActivity(r.B.replace(/\s+/g,' ').trim());
+    if(b2.length >= full.length*1.25 && b2.length <= 130) full=b2;
+  }
+  const ct=contentOf(r)||{};
+  const own=r.t+' '+(r.hae||'');
+  const flat=s=>(s||'').replace(/\s+/g,' ').trim();
+  // 성취기준에 이미 담긴 말인지 (3글자 잇달아 겹치면 담긴 것으로 본다)
+  const inStd=x=>{ const a=flat(x).replace(/\s/g,''), b=full.replace(/\s/g,'');
+    if(a.length<3) return b.includes(a);
+    let hit=0;
+    for(let i2=0;i2+3<=a.length;i2++) if(b.includes(a.slice(i2,i2+3))) hit++;
+    return hit >= (a.length-2)*0.6; };
+  const rel=cat=>(ct[cat]||[]).filter(usable).filter(x=>relatedTo(x,own)).filter(x=>!inStd(x));
+
+  // 바탕이 되는 앎 하나만 앞에 놓는다. 둘을 엮으면 문장이 무너진다.
+  let lead='';
+  const k=rel('지식·이해')[0];
+  if(k) lead=J(flat(k).replace(LEAD_CUT,''),'을','를')+' 알아보고, ';
+  else {
+    const s2=rel('과정·기능')[0];
+    if(s2 && full.length<30) lead=elemAct(flat(s2))+', ';
+  }
+  let out=lead+full;
+  if(out.length>100){
+    for(const re of TRIM){
+      if(out.length<=100) break;
+      const y=out.replace(new RegExp(re.source.replace('^',''),''),'');
+      if(y.length>=30 && y!==out) out=y;
+    }
+  }
+  return r._tc=flat(out);
+}
+/* 성취기준을 이어지는 활동으로 갈라 교수·학습 내용을 만든다 (정보공시 서술용) */
+const CONJ = /(?<=하고|되고|이고|보고|알고|갖고|주고|넣고|짓고|쓰고|읽고|듣고|찾고|세고|기르고|만들고)[,]?\s+/;
+function lessonActs(r){
+  const t=(r.t||'').replace(/\s*\.$/,'');
+  let parts = t.split(CONJ).map(x=>x.trim()).filter(Boolean);
+  // 너무 짧은 조각은 앞 조각에 붙인다 ('듣고' + '말한다')
+  const merged=[];
+  parts.forEach(x=>{
+    if(merged.length && x.replace(/\s/g,'').length < 7) merged[merged.length-1] += ' ' + x;
+    else merged.push(x);
+  });
+  parts = merged;
+  const acts=[];
+  parts.forEach(x=>{
+    let a=x.replace(/(하고|하며|하여|되고|이고|보고|알고|갖고|주고|넣고|짓고|쓰고|읽고|듣고|찾고|세고)$/,
+      m=>({'하고':'하기','하며':'하기','하여':'하기','되고':'되기','이고':'이기','보고':'보기','알고':'알기',
+           '갖고':'갖기','주고':'주기','넣고':'넣기','짓고':'짓기','쓰고':'쓰기','읽고':'읽기','듣고':'듣기',
+           '찾고':'찾기','세고':'세기'}[m]||m));
+    a=toActivity(a);
+    a=a.replace(/^(그리고|또한|또)\s+/,'').trim();
+    if(a.length>2) acts.push(a.length>52? a.slice(0,52)+'…' : a);
+  });
+  return acts.length? acts : [toActivity(t)];
+}
+
+/* 교수·학습 내용 초안: 성취기준을 차시 흐름으로 펼친다 (정보공시 서술용) */
+const STEPCAT=['지식·이해','지식·이해','과정·기능','과정·기능','과정·기능','가치·태도'];
+function teachDraft(r){
+  if(r._teach) return r._teach;
+  const ct = contentOf(r) || {};
+  const own = r.t + ' ' + (r.hae || '');
+  const rel = list => (list||[]).filter(usable).filter(x=>relatedTo(x, own));
+  const all = list => (list||[]).filter(usable);
+  const know = rel(ct['지식·이해']).concat(all(ct['지식·이해']).filter(x=>!relatedTo(x,own)));
+  const skill= rel(ct['과정·기능']).concat(all(ct['과정·기능']).filter(x=>!relatedTo(x,own)));
+  const val  = rel(ct['가치·태도']);
+  const cons = conceptsOf(r,3);
+  const cb0 = cbi(r);
+  const A = cb0.pair[0] || cons[0] || r.a;
+  const B = cb0.pair[1] || '';
+  const acts = lessonActs(r);
+  const summary = teachContent(r);         // 정보공시 칸: 화살표·줄임표 없이 한 문구
+  const inq = (r.q||[]).filter(x=>x&&x.length>3);
+  let topic = r.a || areaKeyOf(r);
+  if(/[?？]$|까$/.test(topic)) topic = cons[0] || '오늘 배울 내용';
+  const cb = cb0;
+
+  const S=[];
+  const add=(ph,t,d,cat,ev)=>S.push({ph:ph, t:t, d:d.filter(Boolean), cat:cat, ev:!!ev});
+
+  add('1차시','만나기 — 배움 문제 세우기',[
+    J(topic,'과','와')+' 관련된 경험을 떠올려 이야기 나누기',
+    '배움 문제 확인하기 — “'+summary+'”',
+    cb.q.fact[0]+' (사실적 질문으로 출발점 살피기)'
+  ],'지식·이해');
+
+  add('2차시','알아보기 — 바탕이 되는 앎 다지기',[
+    know[0]? elemNoun(know[0])+' 알아보기'
+           : J(A,'의','의')+' 뜻과 특징을 보기를 들어 알아보기',
+    know[1]? elemNoun(know[1])+' 살펴보고 정리하기'
+           : (B && cons.indexOf(B)>=0
+                ? J(B,'과','와')+' 견주어 보며 '+J(A,'을','를')+' 정리하기'
+                : J(A,'에','에')+' 대해 알게 된 것을 우리 말로 정리하기'),
+    r.hae? '교육과정 해설에 제시된 내용을 짚어 가며 확인하기' : null
+  ],'지식·이해');
+
+  add('3차시','탐구하기 ① — 직접 해 보기',[
+    acts[0] || summary,
+    skill[0]? elemAct(skill[0]) : '살펴본 것을 표나 그림으로 나타내기',
+    inq[0] || null
+  ],'과정·기능', true);
+
+  add('4차시','탐구하기 ② — 넓혀 가기',[
+    acts[1] || inq[1] || (skill[1]? elemAct(skill[1]) : '다른 사례에 같은 방법을 적용해 보기'),
+    skill[1] && acts[1]? elemAct(skill[1]) : '모둠별 결과를 견주어 같은 점과 다른 점 찾기',
+    cb.q.conc[0]+' (개념적 질문으로 생각 넓히기)'
+  ],'과정·기능', true);
+
+  add('5차시','나누기 — 생각을 견주고 다듬기',[
+    '모둠에서 알게 된 것을 발표하고 서로 묻고 답하기',
+    '친구 의견에 견주어 내 생각을 다듬어 다시 쓰기',
+    '“'+cb.gen[0].replace(/[.\s]+$/,'')+'”로 우리 말로 정리해 보기'
+  ],'과정·기능', true);
+
+  add('6차시','다지기 — 생활로 잇기',[
+    val[0]? elemNoun(val[0])+' 되짚기'
+          : J(A,'을','를')+' 배우며 느낀 점 나누기',
+    cb.q.deb[0]+' (논쟁적 질문으로 따져 보기)',
+    '배운 것을 생활에서 쓸 곳을 찾아 실천 계획 세우기'
+  ],'가치·태도');
+
+  return r._teach = {steps:S, summary:summary, acts:acts, topic:topic,
+    // 옛 화면이 쓰던 두 칸 짜리 흐름도 함께 둔다
+    brief:S.map(s=>[s.ph, s.d[0]])};
+}
+
+/* 평가 방법 추천 — 범주 성향과 서술어를 근거로 (원문 예시가 있으면 그쪽이 우선) */
+const EVALWAY = {
+  '지식·이해': [
+    ['지필평가(선택형·단답형)', '개념·용어·사실의 이해 여부를 확인할 때'],
+    ['지필평가(서술형)', '까닭을 들어 설명하게 할 때'],
+    ['구술·질의응답', '저학년이거나 글쓰기 부담을 줄여야 할 때'],
+  ],
+  '과정·기능': [
+    ['수행평가(관찰)', '수행 과정을 그때그때 확인해야 할 때'],
+    ['수행평가(실험·실습·실기)', '직접 해 보는 활동이 핵심일 때'],
+    ['수행평가(프로젝트·산출물)', '조사·제작·발표로 이어지는 활동일 때'],
+    ['서·논술형', '탐구 과정과 근거를 글로 드러내게 할 때'],
+  ],
+  '가치·태도': [
+    ['관찰평가(체크리스트)', '수업 중 참여와 태도를 누가 기록할 때'],
+    ['자기평가·동료평가', '스스로 돌아보고 서로 격려하게 할 때'],
+    ['포트폴리오', '한 학기에 걸친 변화를 모아 볼 때'],
+  ],
+};
+const FEEDBACK = {
+  '지식·이해': '틀린 까닭을 짚어 주고, 헷갈리는 개념은 보기를 바꾸어 다시 묻습니다.',
+  '과정·기능': '결과보다 하는 과정을 보고, 막힌 지점에서 바로 도움말을 줍니다.',
+  '가치·태도': '한 번의 모습으로 가르지 않고, 여러 차시에 걸쳐 달라진 점을 적어 둡니다.',
+};
+/* 정보공시 표의 '평가 방법' 칸은 도구 이름으로 짧게 적는다. */
+const TOOLNAME={
+  '지필평가(선택형·단답형)':'지필 평가', '지필평가(서술형)':'서술형 평가',
+  '구술·질의응답':'구술 평가', '수행평가(관찰)':'관찰 기록',
+  '수행평가(프로젝트·산출물)':'산출물 평가', '서·논술형':'서·논술형 평가',
+  '관찰평가(체크리스트)':'관찰 체크리스트', '자기평가·동료평가':'자기·동료 평가',
+  '포트폴리오':'포트폴리오'};
+const TOOLBYSUBJ={'과학':'탐구 보고서','체육':'실기 평가','음악':'실기 평가','미술':'작품·감상문',
+  '실과':'실습 결과물','수학':'문제 해결 과정 관찰'};
+function toolName(r, m){
+  if(m==='수행평가(실험·실습·실기)') return TOOLBYSUBJ[r.subj] || '실습 평가';
+  return TOOLNAME[m] || m;
+}
+/* 성취기준이 무엇을 하라고 하는지에 따라 평가 방법의 차례가 달라져야 한다.
+   '설명한다'를 선택형으로 재는 것은 맞지 않는다. */
+const VERBWAY=[
+  [/실험|관찰하고|관찰하여|측정하여|측정하고/,                       '수행평가(실험·실습·실기)'],
+  [/연주|노래를|공연|동작을|경기|운동을 하|실기|신체활동/,           '수행평가(실험·실습·실기)'],
+  [/조사하여|조사하고|탐구한다|탐구하고|자료를 수집|만들|제작|작품으로|산출물|글을 쓴다|글을 쓰고/,
+                                                                    '수행평가(프로젝트·산출물)'],
+  [/토의|토론|대화|발표|말하기|말한다|묻고 답하/,                    '구술·질의응답'],
+  [/설명할 수 있다|설명한다|설명하고|까닭을|근거를 들어/,             '지필평가(서술형)'],
+  [/실천|참여|태도를|기른다|가진다|지닌다|즐긴다|존중|배려|생활한다|습관/,
+                                                                    '관찰평가(체크리스트)'],
+];
+/* 서술어로 가려지지 않을 때 기대는 교과의 평소 평가 방식 */
+const SUBJDEFAULT={'체육':'수행평가(실험·실습·실기)','음악':'수행평가(실험·실습·실기)',
+  '미술':'수행평가(프로젝트·산출물)','실과':'수행평가(실험·실습·실기)',
+  '바른 생활':'관찰평가(체크리스트)','즐거운 생활':'수행평가(관찰)'};
+function evalDraft(r){
+  if(r._eval) return r._eval;
+  const p = catProfile(r), order = CATS.map((c,i)=>[c,p[i]]).sort((a,b)=>b[1]-a[1]);
+  const ways = [];
+  order.forEach((o,i)=>{ (EVALWAY[o[0]]||[]).slice(0, i===0?2:1).forEach(w=>ways.push({m:w[0],why:w[1],cat:o[0]})); });
+  const ct = contentOf(r) || {};
+  const own = r.t + ' ' + (r.hae || '');
+  const rel = c => (ct[c]||[]).filter(usable).filter(x=>relatedTo(x,own));
+  const any = c => (ct[c]||[]).filter(usable);
+
+  /* 평가 요소 — 성취기준 자체를 첫 요소로, 범주마다 하나씩 보탠다 */
+  const el = [];
+  const put = (t,cat)=>{ t=(t||'').trim(); if(!t) return;
+    if(el.some(e=>e.t===t)) return; el.push({t:t, cat:cat}); };
+  put(toActivity(r.t), order[0][0]);
+  CATS.forEach(c=>{ const s=rel(c)[0]||any(c)[0]; if(s) put(elemAct(s), c); });
+  const sk = rel('과정·기능')[1]; if(sk) put(elemAct(sk), '과정·기능');
+  if(el.length<2) lessonActs(r).forEach(a=>{ if(el.length<3) put(a, order[0][0]); });
+  if(el.length<2 && (r.q||[]).length) put(r.q[0], order[0][0]);
+
+  /* 채점 관점 — 성취수준 원문에서 가르는 말을 뽑는다 */
+  const cut = t => (t||'').replace(/\s+/g,' ').trim();
+  const rubric = [['A', cut(r.A)], ['B', cut(r.B)], ['C', cut(r.C)]].filter(x=>x[1]);
+
+  /* 서술어가 가리키는 방법을 앞으로 끌어온다 */
+  const hintText = r.t + ' ' + (r.hae||'');
+  const wanted=[];
+  VERBWAY.forEach(v=>{ if(v[0].test(hintText) && wanted.indexOf(v[1])<0) wanted.push(v[1]); });
+  if(!wanted.length && SUBJDEFAULT[r.subj]) wanted.push(SUBJDEFAULT[r.subj]);
+  // 과학은 탐구가 바탕이라 탐구 보고서를 늘 후보에 둔다
+  if(r.subj==='과학' && wanted.indexOf('수행평가(실험·실습·실기)')<0)
+    wanted.push('수행평가(실험·실습·실기)');
+  if(wanted.length){
+    const pool={};
+    CATS.forEach(c2=>(EVALWAY[c2]||[]).forEach(w=>{ pool[w[0]]={m:w[0],why:w[1],cat:c2}; }));
+    wanted.slice(0,2).reverse().forEach(m=>{
+      const i=ways.findIndex(w=>w.m===m);
+      if(i>=0) ways.unshift(ways.splice(i,1)[0]);
+      else if(pool[m]) ways.unshift(pool[m]);
+    });
+    while(ways.length>4) ways.pop();
+  }
+  const samples = (window.__EVAL && window.__EVAL[r.c]) || [];
+  return r._eval = {ways:ways, elements: el.map(e=>e.t), elementRows: el,
+    thin: el.length<2,
+    mainCat: order[0][0], samples:samples, rubric:rubric,
+    feedback: FEEDBACK[order[0][0]], when: order[0][0]==='가치·태도' ? '3~6차시(지속)' : '3~5차시',
+    area: areaKeyOf(r), count: order[0][0]==='가치·태도' ? '1회(지속 관찰)' : '1~2회'};
+}
+/* ============================================================
+   화면 구성
+   ============================================================ */
+const S={q:'',bands:new Set(),subjs:new Set(),areas:new Set(),sel:null,tab:'std',
+         relMode:'bandCross',relCat:null,sort:'rel',cart:new Set(),map:null};
+try{ JSON.parse(localStorage.getItem('cart2022')||'[]').forEach(c=>S.cart.add(c)); }catch(e){}
+try{ if(localStorage.getItem('theme2022')==='dark') document.documentElement.dataset.theme='dark'; }catch(e){}
+
+/* ---------- 필터 ---------- */
+function chipsInto(host,items,set,onChange){
+  host.innerHTML='';
+  items.forEach(it=>{
+    const b=el('button','chip'+(set.has(it.v)?' on':''));
+    b.appendChild(document.createTextNode(it.label));
+    if(it.hi) b.appendChild(el('span','hi',it.hi));
+    b.onclick=()=>{ set.has(it.v)?set.delete(it.v):set.add(it.v); onChange(); };
+    host.appendChild(b);
+  });
+}
+function currentAreas(){
+  const seen=new Map();
+  STD.forEach(r=>{
+    if(S.bands.size&&!S.bands.has(r.b)) return;
+    if(S.subjs.size&&!S.subjs.has(r.s)) return;
+    const k=r.subj+'|'+areaKeyOf(r);
+    if(!seen.has(k)) seen.set(k,{v:k,label:areaKeyOf(r),n:0,bands:new Set(),sr:r.sr,s:r.s,units:new Set()});
+    const e=seen.get(k); e.n++; e.units.add(r.a);
+  });
+  seen.forEach(e=>STD.forEach(r=>{ if(r.subj+'|'+areaKeyOf(r)===e.v) e.bands.add(r.b); }));
+  return [...seen.values()];
+}
+function renderFilters(){
+  chipsInto($('#fBand'),BANDS.map((b,i)=>({v:i,label:shortBand(b)})),S.bands,()=>{ syncAreas(); render(); });
+  chipsInto($('#fSubj'),SUBJ.map((s,i)=>({v:i,label:s})),S.subjs,()=>{ syncAreas(); render(); });
+  renderAreaChips();
+}
+function syncAreas(){ const ok=new Set(currentAreas().map(a=>a.v));
+  [...S.areas].forEach(a=>{ if(!ok.has(a)) S.areas.delete(a); }); renderAreaChips(); }
+function renderAreaChips(){
+  const host=$('#fArea');
+  if(!S.subjs.size){ host.innerHTML='';
+    host.appendChild(el('span','fnote','교과를 고르면 그 교과의 영역이 나옵니다.')); return; }
+  const list=currentAreas().sort((a,b)=>a.label.localeCompare(b.label,'ko'));
+  chipsInto(host,list.map(a=>({v:a.v,label:a.label,
+    hi:a.sr?[...a.bands].sort().map(b=>shortBand(BANDS[b]).replace('학년군','')).join('·'):String(a.n)})),
+    S.areas,render);
+  host.appendChild(el('span','fnote','· 교육과정 내용 체계의 영역입니다. 숫자가 1~2·3~4·5~6이면 학년군에 걸쳐 이어집니다.'));
+}
+
+/* ---------- 목록 ---------- */
+function render(){
+  renderAreaChips();
+  document.querySelectorAll('#fBand .chip').forEach((b,i)=>b.classList.toggle('on',S.bands.has(i)));
+  document.querySelectorAll('#fSubj .chip').forEach((b,i)=>b.classList.toggle('on',S.subjs.has(i)));
+  let rows=filtered(); const raw=S.q.trim(); const terms=HILITE;
+  const narrowed = raw && (S.bands.size||S.subjs.size||S.areas.size);
+  let outside = 0, widened = false;
+  if(narrowed){
+    const all = searchAllScope();
+    outside = all.length - rows.length;
+    if(!rows.length && all.length){ rows = all; widened = true; }   // 범위 안에 없으면 넓혀서 보여 준다
+  }
+  $('#cnt').textContent=rows.length+'건';
+  $('#scope').textContent=raw
+    ? (widened? `“${raw}” 결과 · 전체에서 찾음` : `“${raw}” 결과`)
+    : (S.areas.size?'선택한 영역':'전체 성취기준');
+  $('#clr').hidden=!raw; $('#btnSort').hidden=!raw;
+  $('#btnSort').textContent=S.sort==='rel'?'관련도 순':'학년군 순';
+
+  const list=$('#list'); list.innerHTML='';
+  const wideNote=()=>{
+    if(!narrowed || (!outside && !widened)) return null;
+    const n=el('div','relaxnote');
+    n.innerHTML = widened
+      ? `고른 범위 안에는 “${raw}”가 없어 <b>전체에서</b> 찾았습니다.`
+      : `고른 범위 밖에 <b>${outside}건</b> 더 있습니다.`;
+    const b=el('button','btn','범위 지우고 전체에서 찾기');
+    b.onclick=()=>{ S.bands.clear(); S.subjs.clear(); S.areas.clear(); render(); };
+    n.appendChild(document.createTextNode(' ')); n.appendChild(b);
+    return n;
+  };
+  if(!rows.length){ const e=el('div','empty');
+    e.innerHTML='찾는 성취기준이 없습니다.<br>낱말을 줄여 보세요.';
+    list.appendChild(e); renderDetail(); return; }
+  { const n=wideNote(); if(n) list.appendChild(n); }
+  if(RELAX){ const n=el('div','relaxnote');
+    n.innerHTML=`“${raw}”와 꼭 맞는 것이 없어 <b>${RELAX.join(' · ')}</b>가 들어간 성취기준을 찾았습니다.`;
+    list.appendChild(n); }
+  const frag=document.createDocumentFragment();
+  const grouped=!raw||S.sort!=='rel';
+  let lastKey=null;
+  rows.slice(0,700).forEach(r=>{
+    if(grouped){
+      const ak=areaKeyOf(r), key=r.b+'|'+r.s+'|'+ak+'|'+r.a;
+      if(key!==lastKey){ lastKey=key;
+        const g=el('div','grouphead');
+        const label=(ak===r.a)? `${shortBand(r.band)} · ${r.subj} · ${ak}`
+                              : `${shortBand(r.band)} · ${r.subj} · ${ak} — ${r.a}`;
+        g.appendChild(document.createTextNode(label));
+        const n=rows.filter(x=>x.b===r.b&&x.s===r.s&&areaKeyOf(x)===ak&&x.a===r.a).length;
+        g.appendChild(el('span','n',r.sr?`${n}개 · 학년군 연계`:`${n}개`));
+        frag.appendChild(g);
+      }
+    }
+    const it=el('div','item'+(S.sel===r?' sel':''));
+    const cb=el('input'); cb.type='checkbox'; cb.checked=S.cart.has(r.c);
+    cb.onclick=ev=>{ ev.stopPropagation(); cb.checked?S.cart.add(r.c):S.cart.delete(r.c); saveCart(); };
+    const main=el('div','itemmain'), h=el('div');
+    const code=el('span','code'); code.appendChild(hl(r.c,terms)); h.appendChild(code);
+    if(!grouped) h.appendChild(el('span','meta',`${shortBand(r.band)} · ${r.subj} · ${r.a}`));
+    if(r.hae) h.appendChild(el('span','badge','해설'));
+    if(raw&&r._inBody) h.appendChild(el('span','badge','성취수준에서 일치'));
+    main.appendChild(h);
+    const tx=el('div','itemtext'); tx.appendChild(hl(r.t,terms)); main.appendChild(tx);
+    it.appendChild(cb); it.appendChild(main);
+    it.onclick=()=>{ S.sel=r; S.map=null; render(); $('#detailcol').classList.add('open'); };
+    frag.appendChild(it);
+  });
+  list.appendChild(frag);
+  if(rows.length>700) list.appendChild(el('div','empty',`상위 700건만 표시했습니다 (전체 ${rows.length}건).`));
+  if(!S.sel||!rows.includes(S.sel)) S.sel=rows[0];
+  renderDetail(); updateCart();
+}
+let NAVHIST=[];
+function goto(o,opt){
+  opt=opt||{};
+  if(S.sel && S.sel!==o){ NAVHIST.push({r:S.sel, tab:S.tab}); if(NAVHIST.length>30) NAVHIST.shift(); }
+  S.sel=o; S.map=null;
+  if(opt.tab) S.tab=opt.tab;
+  if(!filtered().includes(o)){ S.areas.clear(); S.subjs.clear(); S.bands.clear(); }
+  render(); if(!opt.keepScroll) $('#detailcol').scrollTop=0; }
+function goBack(){
+  const h=NAVHIST.pop(); if(!h) return;
+  S.sel=h.r; S.tab=h.tab||S.tab; S.map=null;
+  if(!filtered().includes(h.r)){ S.areas.clear(); S.subjs.clear(); S.bands.clear(); }
+  render(); }
+
+/* ---------- 상세 ---------- */
+function secTitle(t,src){ const h=el('h4','sec',t); if(src) h.appendChild(el('span','src',src)); return h; }
+function relCard(o,score,kws){
+  const c=el('div','rel'), h=el('div','relhead');
+  h.appendChild(el('span','code',o.c));
+  h.appendChild(el('span','meta',`${shortBand(o.band)} · ${o.subj} · ${o.a}`));
+  h.appendChild(el('span','badge',mainCat(o)));
+  if(score!=null) h.appendChild(el('span','score',Math.round(score*100)+'%'));
+  c.appendChild(h);
+  const t=el('div','itemtext',o.t); t.style.webkitLineClamp='3'; c.appendChild(t);
+  if(kws&&kws.length){ const k=el('div'); kws.forEach(x=>k.appendChild(el('span','kw',x))); c.appendChild(k); }
+  c.onclick=()=>goto(o); return c;
+}
+function renderDetail(){
+  const d=$('#detail'); d.innerHTML=''; const r=S.sel;
+  if(!r){ d.appendChild(el('div','empty','왼쪽 목록에서 성취기준을 고르세요.')); return; }
+  const terms=HILITE;
+  const head=el('div','dhead');
+  const back=el('button','btn backbtn','← 목록'); back.style.marginBottom='8px';
+  back.onclick=()=>$('#detailcol').classList.remove('open'); head.appendChild(back);
+  if(NAVHIST.length){
+    const prev=NAVHIST[NAVHIST.length-1].r;
+    const bb=el('button','btn backbtn','↩ '+prev.c+' (으)로 돌아가기');
+    bb.style.marginBottom='8px'; bb.style.marginLeft='6px';
+    bb.title=prev.t;
+    bb.onclick=goBack; head.appendChild(bb);
+  }
+  head.appendChild(el('div','dcode',r.c));
+  const tags=el('div','dtags');
+  [r.band,r.subj].forEach(t=>tags.appendChild(el('span','tag',t)));
+  const dn=domName(r);
+  tags.appendChild(el('span','tag solid', dn||r.a));
+  if(dn&&dn!==r.a) tags.appendChild(el('span','tag',`단원: ${r.a}${(r.domGuess&&!DOMPICK[r.c])?' · 영역 자동 연결':''}`));
+  if(r.sr) tags.appendChild(el('span','tag','학년군 위계'));
+  head.appendChild(tags);
+  const dt=el('div','dtext'); dt.appendChild(hl(r.t,terms)); head.appendChild(dt);
+  const act=el('div','dact');
+  const inCart=S.cart.has(r.c);
+  const bAdd=el('button','btn'+(inCart?' on':''),inCart?'✓ 담김':'+ 수업 바구니');
+  bAdd.onclick=()=>{ S.cart.has(r.c)?S.cart.delete(r.c):S.cart.add(r.c); saveCart(); render(); };
+  const bMd=el('button','btn','이 성취기준 MD');
+  bMd.onclick=()=>download(`${r.c.replace(/[\[\]]/g,'')}.md`, mdOf([r]), 'text/markdown');
+  act.appendChild(bAdd); act.appendChild(bMd);
+  head.appendChild(act); d.appendChild(head);
+
+  const tabs=el('div','tabs');
+  [['std','성취기준·성취수준'],['cs','내용 체계'],['lesson','수업·평가 계획'],
+   ['plan','개념 기반 탐구'],['rel','연관·위계'],['map','개념 지도']].forEach(([k,label])=>{
+    const b=el('button','tab'+(S.tab===k?' on':''),label);
+    b.onclick=()=>{ S.tab=k; renderDetail(); }; tabs.appendChild(b);
+  });
+  d.appendChild(tabs);
+  const pane=el('div','pane');
+  ({std:paneStd,cs:paneCs,lesson:paneLesson,plan:panePlan,rel:paneRel,map:paneMap}[S.tab]||paneStd)(pane,r,terms);
+  d.appendChild(pane);
+}
+
+/* 탭 1 — 성취기준·성취수준 */
+function paneStd(pane,r,terms){
+  if(r.hae){
+    pane.appendChild(secTitle('성취기준 해설','교육과정 원문 그대로'));
+    const q=el('blockquote','quote'); q.appendChild(hl(r.hae,terms));
+    if(r.haePg) q.appendChild(el('div','src','— 2022 개정 '+r.subj+'과 교육과정(교육부 고시 제2022-33호) '+r.haePg+'쪽'));
+    pane.appendChild(q);
+  }
+  pane.appendChild(secTitle('성취기준별 성취수준','성취수준 원문'));
+  ['A','B','C'].forEach(L=>{
+    const row=el('div','lv lv-'+L); row.appendChild(el('div','lvb',L));
+    const t=el('div','lvt'); t.appendChild(hl(r[L],terms)); row.appendChild(t); pane.appendChild(row);
+  });
+  if(r.q){
+    pane.appendChild(secTitle('교육과정에 제시된 탐구 활동','교육과정 원문'));
+    const ul=el('ul','tight'); r.q.forEach(x=>{ const li=el('li'); li.appendChild(hl(x,terms)); ul.appendChild(li); });
+    pane.appendChild(ul);
+  }
+  if(r.note){ const c=el('div','card'); c.appendChild(el('div','catname','원문 주석'));
+    c.appendChild(document.createTextNode('※ '+r.note)); pane.appendChild(c); }
+  const p=catProfile(r);
+  pane.appendChild(secTitle('내용 요소 범주 성향','자동 추정'));
+  const g=el('div','grid3');
+  CATS.forEach((c,i)=>{
+    const cell=el('div','card plain');
+    cell.appendChild(el('div','catname',c));
+    const bar=el('div'); bar.style.cssText='height:6px;background:var(--sunk2);border-radius:99px;overflow:hidden;margin-top:4px';
+    const f=el('i'); f.style.cssText=`display:block;height:100%;width:${Math.round(p[i]*100)}%;background:var(--ink)`;
+    bar.appendChild(f);
+    cell.appendChild(el('div',null,Math.round(p[i]*100)+'%')).style.cssText='font-weight:800;font-size:15px';
+    cell.appendChild(bar); g.appendChild(cell);
+  });
+  pane.appendChild(g);
+}
+
+/* 탭 2 — 내용 체계 */
+function domPicker(pane,r){
+  if(!r.domCand&&!r.domGuess) return;
+  const doms=(DOM[r.subj]||[]).map(d=>d.name);
+  const box=el('div','card plain');
+  box.appendChild(el('div','catname',
+    '내용 체계 영역 — 교육과정에 단원↔영역 대응표가 없어 자동으로 이어 붙였습니다. 반드시 확인하고 다르면 바꿔 주세요.'));
+  const sel=el('select'); sel.style.cssText='margin-top:5px;padding:5px 8px;border:1px solid var(--line2);border-radius:6px;background:var(--bg);max-width:100%';
+  (r.domCand||doms).concat(doms.filter(d=>!(r.domCand||[]).includes(d))).forEach((d,i,arr)=>{
+    if(arr.indexOf(d)!==i) return;
+    const o=el('option',null,d); o.value=d; if(d===domName(r)) o.selected=true; sel.appendChild(o);
+  });
+  sel.onchange=()=>{ setDom(r,sel.value); renderDetail(); };
+  box.appendChild(sel);
+  pane.appendChild(box);
+}
+function paneCs(pane,r,terms){
+  domPicker(pane,r);
+  const dm=domOf(r);
+  if(!dm){
+    pane.appendChild(el('div','hint',
+      `${r.subj}의 내용 체계 영역과 이 성취기준이 아직 이어지지 않았습니다. 아래 「교과 살펴보기」에서 교과 전체 내용 체계를 볼 수 있습니다.`));
+  } else {
+    const sb=subPick(r), end=enduringOf(r);
+    pane.appendChild(secTitle(`핵심 아이디어 — ${dm.name} 영역`,'교육과정 원문'));
+    if(end && !end.weak)
+      pane.appendChild(el('div','lenswhy','진하게 표시한 문장이 이 성취기준에 가장 가깝습니다. 나머지는 같은 영역의 다른 핵심 아이디어입니다.'));
+    else
+      pane.appendChild(el('div','lenswhy','이 영역은 여러 학년에 걸쳐 넓게 묶여 있어, 이 성취기준에 바로 맞아떨어지는 핵심 아이디어가 없습니다. 영역 전체를 참고해 직접 고르세요.'));
+    dm.idea.forEach(x=>{
+      const c=el('div', (end && !end.weak && x===end.text)? 'card hit' : 'card plain');
+      c.appendChild(hl(x,terms)); pane.appendChild(c); });
+
+    const ct=contentOf(r), all=contentAllOf(r);
+    if(ct){
+      pane.appendChild(secTitle(`내용 요소 — ${shortBand(r.band)}`
+        + (sb? ` · ${sb}` : ''),'교육과정 원문'));
+      if(sb) pane.appendChild(el('div','lenswhy',
+        `${r.subj}의 「${dm.name}」 영역은 다시 하위 범주로 갈립니다. 이 성취기준이 놓인 「${sb}」의 내용 요소만 추렸습니다.`));
+      const g=el('div','grid3');
+      CATS.forEach(c=>{
+        const cell=el('div','card plain');
+        cell.appendChild(el('div','catname',c));
+        const ul=el('ul','tight');
+        (ct[c]||['—']).forEach(x=>{ const li=el('li'); li.appendChild(hl(x,terms)); ul.appendChild(li); });
+        cell.appendChild(ul); g.appendChild(cell);
+      });
+      pane.appendChild(g);
+      if(sb && all){
+        const more=el('details');
+        more.appendChild(el('summary','catname',`${dm.name} 영역 전체 내용 요소 보기`));
+        const g2=el('div','grid3');
+        CATS.forEach(c=>{
+          const cell=el('div','card plain'); cell.appendChild(el('div','catname',c));
+          const ul=el('ul','tight');
+          (all[c]||['—']).forEach(x=>{ const li=el('li'); li.appendChild(hl(x,terms)); ul.appendChild(li); });
+          cell.appendChild(ul); g2.appendChild(cell); });
+        more.appendChild(g2); pane.appendChild(more);
+      }
+    }
+  }
+  const a=areaOf(r);
+  if(a){
+    pane.appendChild(secTitle(`영역별 성취수준 — ${a.a}`,'성취수준 원문'));
+    ['A','B','C'].forEach(L=>{
+      if(!a.L[L]) return;
+      const row=el('div','lv lv-'+L); row.appendChild(el('div','lvb',L));
+      const box=el('div','lvt');
+      for(const [cat,txt] of Object.entries(a.L[L])){
+        const c=el('div'); c.style.marginBottom='7px';
+        c.appendChild(el('div','catname',cat));
+        const p=el('div'); p.appendChild(hl(txt,terms)); c.appendChild(p); box.appendChild(c);
+      }
+      row.appendChild(box); pane.appendChild(row);
+    });
+  }
+}
+
+/* 탭 3 — 수업 설계 */
+function panePlan(pane,r,terms){
+  domPicker(pane,r);
+  const k=cbi(r);
+  const w=el('div','warn');
+  w.innerHTML='<b>아래 개념 기반 탐구 항목은 인공지능이 만든 초안입니다.</b> 교육과정 원문(핵심 아이디어·내용 요소·성취기준)을 바탕으로 자동 생성한 것이므로, 반드시 선생님이 검토하고 학급 상황에 맞게 고쳐 사용해 주세요. 「영속적 이해」로 제시된 문장만 교육과정 원문 그대로입니다.';
+  pane.appendChild(w);
+
+  pane.appendChild(secTitle('개념적 렌즈','AI 초안'));
+  const lw=el('div'); lw.appendChild(el('span','pill solid',k.lens));
+  pane.appendChild(lw);
+  pane.appendChild(el('div','lenswhy','단원 전체를 꿰뚫어 보게 하는 큰 개념입니다. '+k.lensWhy+'.'));
+
+  pane.appendChild(secTitle('핵심 개념','성취기준·내용 요소에서 추출'));
+  const cw=el('div');
+  k.concepts.forEach(c=>cw.appendChild(el('span', k.pair.indexOf(c)>=0?'pill solid':'pill', c)));
+  pane.appendChild(cw);
+  pane.appendChild(el('div','lenswhy','옮겨 쓸 수 있는 이름씨만 골랐습니다. 진하게 표시한 '
+    + '「'+k.pair[0]+'」'+J(k.pair[0],'과','와').slice(k.pair[0].length) + ' '
+    + '「'+k.pair[1]+'」'+J(k.pair[1],'을','를').slice(k.pair[1].length)
+    + ' 짝으로 삼아 아래 일반화 문장을 세웠습니다.'));
+
+  if(k.enduring){
+    const e=k.enduring;
+    pane.appendChild(secTitle(`영속적 이해 — ${e.domain} 영역 핵심 아이디어`
+      + (e.sub? ` · ${e.sub}` : ''),'교육과정 원문'));
+    if(e.weak){
+      pane.appendChild(el('div','lenswhy',
+        '이 영역은 초·중학교에 걸쳐 넓게 묶여 있어 이 성취기준에 바로 맞아떨어지는 핵심 아이디어가 없습니다. 아래는 영역 전체이니 직접 고르거나 학년 수준에 맞게 고쳐 쓰세요.'));
+      e.all.forEach(x=>{ const c2=el('div','card plain'); c2.appendChild(hl(x,terms)); pane.appendChild(c2); });
+    } else {
+      const c=el('div','card'); c.appendChild(hl(e.text,terms)); pane.appendChild(c);
+      if(e.others.length){
+        pane.appendChild(el('div','lenswhy','다음 문장도 함께 볼 만합니다.'));
+        e.others.forEach(x=>{ const c2=el('div','card plain'); c2.textContent=x; pane.appendChild(c2); });
+      }
+      const rest=e.all.filter(x=>x!==e.text&&e.others.indexOf(x)<0);
+      if(rest.length){
+        const more=el('details'); more.appendChild(el('summary','catname','같은 영역의 다른 핵심 아이디어 보기'));
+        rest.forEach(x=>{ const c2=el('div','card plain'); c2.textContent=x; more.appendChild(c2); });
+        pane.appendChild(more);
+      }
+    }
+  }
+  const anyOrig=(k.genSrc||[]).some(x=>x==='해설'||x==='성취기준');
+  pane.appendChild(secTitle('일반화 문장', anyOrig? '교육과정 원문 + AI 초안' : 'AI 초안'));
+  pane.appendChild(el('div','lenswhy','개념과 개념의 관계를 현재형으로 진술한 문장입니다. '
+    +'학생이 스스로 도달해야 할 결론이므로 수업 앞머리에 알려 주지 않습니다.'));
+  const SRCLBL={'해설':'성취기준 해설에서 옮김','성취기준':'성취기준을 명제로 바꿈',
+                '렌즈':'AI가 개념적 렌즈에 맞추어 지음','내용 요소':'내용 요소에서 옮김'};
+  k.gen.forEach((g,i)=>{
+    const src=(k.genSrc||[])[i]||'렌즈';
+    const c=el('div', (src==='해설'||src==='성취기준')? 'card hit':'card');
+    c.appendChild(el('div',null,g));
+    c.appendChild(el('div','src', SRCLBL[src]||src));
+    pane.appendChild(c);
+  });
+
+  pane.appendChild(secTitle('탐구 질문','AI 초안'));
+  const g=el('div','grid3');
+  [['사실적 질문','답이 하나로 닫히는 질문. 바탕 지식을 갖추는 데 씁니다.',k.q.fact],
+   ['개념적 질문','다른 사례에도 옮겨 쓸 수 있는 질문. 일반화로 이끕니다.',k.q.conc],
+   ['논쟁적 질문','근거에 따라 답이 갈리는 질문. 토의·토론에 씁니다.',k.q.deb]].forEach(row=>{
+    const cell=el('div','card plain'); cell.appendChild(el('div','catname',row[0]));
+    cell.appendChild(el('div','lenswhy',row[1]));
+    const ul=el('ul','tight'); row[2].forEach(x=>ul.appendChild(el('li',null,x)));
+    cell.appendChild(ul); g.appendChild(cell);
+  });
+  pane.appendChild(g);
+
+  const iq=inqOf(r);
+  if(iq && iq.length){
+    pane.appendChild(secTitle('교육과정에 제시된 탐구 활동 — '+(r.a||'')+' 단원','교육과정 원문 그대로'));
+    pane.appendChild(el('div','lenswhy',
+      '성취기준과 나란히 「탐구 활동」으로 제시된 것입니다. 고려 사항과는 다른 절이며, 이 단원 성취기준에 두루 걸칩니다.'));
+    const ul=el('ul','tight');
+    iq.forEach(x=>{ const li=el('li'); li.appendChild(hl(x,terms)); ul.appendChild(li); });
+    pane.appendChild(ul);
+  }
+  if(r.hae){
+    pane.appendChild(secTitle('성취기준 해설','교육과정 원문 그대로'));
+    pane.appendChild(el('div','lenswhy',
+      '아래 개념·일반화·탐구 질문을 검토할 때 이 해설을 먼저 견주어 보세요. 교육과정이 이 성취기준을 어떻게 풀이했는지 밝힌 대목입니다.'));
+    const q=el('blockquote','quote'); q.appendChild(hl(r.hae,terms));
+    if(r.haePg) q.appendChild(el('div','src','— 2022 개정 '+r.subj+'과 교육과정(교육부 고시 제2022-33호) '+r.haePg+'쪽 성취기준 해설에서 인용'));
+    pane.appendChild(q);
+  }
+  const rows=guideRows(r);
+  if(rows.length){
+    const direct=rows.filter(x=>x.direct), rest=rows.filter(x=>!x.direct);
+    pane.appendChild(secTitle('성취기준 적용 시 고려 사항','교육과정 원문 그대로'));
+    if(direct.length){
+      pane.appendChild(el('div','lenswhy','이 성취기준을 바로 풀이하는 대목입니다.'));
+      direct.forEach(x=>{
+        const q=el('blockquote','quote'); q.appendChild(hl(x.t,terms));
+        if(x.pg) q.appendChild(el('div','src','— '+r.subj+'과 교육과정 '+x.pg+'쪽'));
+        pane.appendChild(q); });
+    }
+    if(rest.length){
+      if(direct.length) pane.appendChild(el('div','lenswhy','같은 영역에 함께 제시된 그 밖의 고려 사항입니다.'));
+      const ul=el('ul','tight');
+      rest.forEach(x=>{ const li=el('li'); li.appendChild(hl(x.t,terms)); ul.appendChild(li); });
+      pane.appendChild(ul);
+    }
+    const pgs=[...new Set(rows.map(x=>x.pg).filter(Boolean))];
+    if(pgs.length) pane.appendChild(el('div','src',
+      '출처: 교육부, 2022 개정 '+r.subj+'과 교육과정(교육부 고시 제2022-33호 별책) '
+      + (pgs.length>1? pgs[0]+'~'+pgs[pgs.length-1] : pgs[0]) + '쪽'));
+  }
+  const sm=SMETA[r.subj];
+  if(sm){
+    pane.appendChild(secTitle(`${r.subj}과 교과 역량`,'교육과정 원문 그대로'));
+    if(sm.comp.length){
+      const cw2=el('div'); sm.comp.forEach(c=>cw2.appendChild(el('span','pill solid',c)));
+      pane.appendChild(cw2);
+      const dsc=sm.compDesc||{};
+      const has=sm.comp.filter(c=>dsc[c]);
+      if(has.length){
+        has.forEach(c=>{
+          const card=el('div','card plain');
+          card.appendChild(el('div','catname',c));
+          card.appendChild(el('div',null,dsc[c]));
+          pane.appendChild(card); });
+        if(has.length<sm.comp.length)
+          pane.appendChild(el('div','lenswhy','나머지 역량은 원문에 이름만 제시되어 있고 따로 풀이가 없습니다.'));
+      } else {
+        pane.appendChild(el('div','lenswhy',
+          r.subj+'과 교육과정에는 역량 이름만 제시되어 있고 역량별 풀이가 따로 없습니다. 아래 성격·목표 서술을 참고하세요.'));
+      }
+    }
+    else pane.appendChild(el('div','hint',
+      r.subj+'과 교육과정에는 교과 역량 목록이 따로 제시되어 있지 않습니다. 총론 핵심역량과 이어 서술한 아래 문단을 참고하세요.'));
+    (sm.compText||[]).forEach(t=>{ const c=el('div','card plain'); c.textContent=t; pane.appendChild(c); });
+  }
+}
+
+/* 탭 4 — 연관·위계 */
+function paneRel(pane,r){
+  const ser=seriesOf(r);
+  pane.appendChild(secTitle('학년군 위계',''));
+  if(ser){
+    const tl=el('div','tl');
+    BANDS.forEach((bn,bi)=>{
+      const rows=ser.filter(x=>x.b===bi).sort((a,b)=>a.c<b.c?-1:1);
+      if(!rows.length) return;
+      const band=el('div','tlband'+(bi===r.b?' cur':''));
+      band.appendChild(el('div','tlname',`${shortBand(bn)} — ${rows.length}개`));
+      rows.forEach(o=>{ const row=el('div','tlrow'+(o===r?' me':''));
+        row.appendChild(el('span','code',o.c)); row.appendChild(el('span',null,o.t));
+        row.onclick=()=>goto(o); band.appendChild(row); });
+      tl.appendChild(band);
+    });
+    pane.appendChild(tl);
+  } else {
+    pane.appendChild(el('div','hint',
+      `${r.subj}는 학년군마다 영역(단원)이 달라 코드로 이어지는 위계가 없습니다. 대신 같은 교과의 다른 학년군에서 내용이 가까운 성취기준을 찾아 드립니다. 참고용 추정입니다.`));
+    let any=false;
+    BANDS.forEach((bn,bi)=>{
+      if(bi===r.b) return;
+      const g=seqGuess(r,bi); if(!g.length) return; any=true;
+      pane.appendChild(el('div','catname',`${shortBand(bn)} — ${bi<r.b?'앞선 배움':'이어지는 배움'}`));
+      g.forEach(({o,s})=>pane.appendChild(relCard(o,s,commonKw(r,o))));
+    });
+    if(!any) pane.appendChild(el('div','empty','다른 학년군에서 이어지는 성취기준을 찾지 못했습니다.'));
+  }
+  pane.appendChild(secTitle('연관 성취기준',''));
+  const modes=[['bandCross','같은 학년군 · 다른 교과'],['band','같은 학년군 전체'],['subject','같은 교과'],['all','전체']];
+  const m=el('div','dact'); m.style.marginBottom='8px';
+  modes.forEach(([k,l])=>{ const b=el('button','btn'+(S.relMode===k?' on':''),l);
+    b.onclick=()=>{ S.relMode=k; renderDetail(); }; m.appendChild(b); });
+  pane.appendChild(m);
+  const cm=el('div','dact'); cm.style.marginBottom='10px';
+  const bAll=el('button','btn'+(S.relCat?'':' on'),'범주 전체');
+  bAll.onclick=()=>{ S.relCat=null; renderDetail(); }; cm.appendChild(bAll);
+  CATS.forEach(c=>{ const b=el('button','btn'+(S.relCat===c?' on':''),c);
+    b.onclick=()=>{ S.relCat=S.relCat===c?null:c; renderDetail(); }; cm.appendChild(b); });
+  pane.appendChild(cm);
+  const sims=similar(r,S.relMode,S.relCat);
+  if(!sims.length) pane.appendChild(el('div','empty','조건에 맞는 연관 성취기준을 찾지 못했습니다. 범위를 넓혀 보세요.'));
+  sims.forEach(({o,s})=>pane.appendChild(relCard(o,s,commonKw(r,o))));
+}
+
+/* 탭 — 수업·평가 계획 */
+function paneLesson(pane,r,terms){
+  domPicker(pane,r);
+  const td=teachDraft(r), ed=evalDraft(r);
+  const w=el('div','warn');
+  w.innerHTML='<b>아래 교수·학습 내용과 평가 방법은 인공지능이 만든 초안입니다.</b> 성취기준·성취수준·내용 요소를 바탕으로 자동 구성한 것이므로 반드시 검토하고 학급·학교 실정에 맞게 고쳐 사용해 주세요. 「성취수준 A·B·C」와 「예시 평가 도구」는 원문 그대로입니다.';
+  pane.appendChild(w);
+
+  /* 교수·학습 내용 — 정보공시 평가 서술에 그대로 쓰는 칸 */
+  const spot=el('div','spotlight');
+  spot.appendChild(el('span','lbl','정보공시 평가 · 단원명(교수·학습 내용) 칸'));
+  spot.appendChild(el('div','big', td.summary));
+  const sb=el('div','sub');
+  sb.textContent='성취기준과 그 학년군 내용 요소를 엮어, 무엇을 가르치는지 드러나도록 풀어 쓴 초안입니다. 줄임표로 자르거나 화살표로 잇지 않았습니다. 학급 상황에 맞게 손보세요.';
+  spot.appendChild(sb);
+  const sbtn=el('div','dact');
+  const bCopySum=el('button','btn on','이 문장 복사');
+  bCopySum.onclick=()=>copy(td.summary, bCopySum);
+  const bActs=el('button','btn','차시용 활동으로 나눠 복사');
+  bActs.onclick=()=>copy(lessonActs(r).map((x,i)=>`${i+1}. ${x}`).join('\n'), bActs);
+  sbtn.appendChild(bCopySum); sbtn.appendChild(bActs);
+  spot.appendChild(sbtn);
+  pane.appendChild(spot);
+  pane.appendChild(secTitle('차시 흐름 (6차시 얼개)','AI 초안'));
+  const note=el('div','sub2');
+  note.textContent='성취기준 본문과 그 학년군 내용 요소(지식·이해 → 과정·기능 → 가치·태도)를 차례로 풀어 놓은 얼개입니다. 차시 수는 학교 진도에 맞게 늘이거나 줄여 쓰세요.';
+  pane.appendChild(note);
+  td.steps.forEach(st=>{
+    const c=el('div','card plain step');
+    const h=el('div','stephd');
+    h.appendChild(el('span','pill solid', st.ph));
+    h.appendChild(el('span','stept', st.t));
+    h.appendChild(el('span','pill', st.cat));
+    if(st.ev) h.appendChild(el('span','pill mark','평가'));
+    c.appendChild(h);
+    const u=el('ul','tight'); st.d.forEach(x=>u.appendChild(el('li',null,x))); c.appendChild(u);
+    pane.appendChild(c);
+  });
+  const bFlow=el('button','btn','차시 흐름 복사');
+  bFlow.onclick=()=>copy(td.steps.map(st=>st.ph+' '+st.t+String.fromCharCode(10)+
+    st.d.map(x=>'  · '+x).join(String.fromCharCode(10))).join(String.fromCharCode(10)), bFlow);
+  const fw=el('div','dact'); fw.appendChild(bFlow); pane.appendChild(fw);
+  if(r.q&&r.q.length){
+    pane.appendChild(secTitle('교육과정에 제시된 탐구 활동','교육과정 원문'));
+    const u2=el('ul','tight'); r.q.forEach(x=>{ const li=el('li'); li.appendChild(hl(x,terms)); u2.appendChild(li); });
+    pane.appendChild(u2);
+  }
+
+  /* 평가 계획 */
+  pane.appendChild(secTitle('평가 영역 · 요소','AI 초안 + 원문'));
+  const g=el('div','grid3');
+  const c1=el('div','card plain'); c1.appendChild(el('div','catname','평가 영역'));
+  c1.appendChild(el('div',null,ed.area)).style.fontWeight='700';
+  c1.appendChild(el('div',null,`중심 범주: ${ed.mainCat}`)).style.cssText='font-size:12px;color:var(--dim);margin-top:3px';
+  const c2=el('div','card plain'); c2.appendChild(el('div','catname','평가 요소'));
+  const u3=el('ul','tight'); ed.elements.forEach(x=>u3.appendChild(el('li',null,x))); c2.appendChild(u3);
+  if(ed.thin) c2.appendChild(el('div','lenswhy',
+    '이 교과는 교육과정 원문(내용 체계)이 제공되지 않아 성취기준 하나만 요소로 둡니다. 차시 흐름을 보고 나누어 쓰세요.'));
+  const c3=el('div','card plain'); c3.appendChild(el('div','catname','평가 시기 · 횟수(권장)'));
+  c3.appendChild(el('div',null,ed.count)).style.fontWeight='700';
+  c3.appendChild(el('div',null,ed.when+' 무렵')).style.cssText='font-size:12px;color:var(--dim);margin-top:3px';
+  c3.appendChild(el('div',null,'학교 평가 계획에 맞추어 조정')).style.cssText='font-size:12px;color:var(--dim);margin-top:3px';
+  g.appendChild(c1); g.appendChild(c2); g.appendChild(c3);
+  pane.appendChild(g);
+
+  pane.appendChild(secTitle('피드백 방안','AI 초안'));
+  pane.appendChild(el('div','card plain', ed.feedback));
+  pane.appendChild(secTitle('평가 방법 제안','AI 초안'));
+  ed.ways.forEach(({m,why,cat})=>{
+    const c=el('div','card plain');
+    const h=el('div'); h.appendChild(el('span','pill solid',m)); h.appendChild(el('span','pill',cat));
+    c.appendChild(h);
+    c.appendChild(el('div',null,why)).style.cssText='font-size:13px;color:var(--dim);margin-top:4px';
+    pane.appendChild(c);
+  });
+
+  pane.appendChild(secTitle('평가 기준 (성취수준 그대로)','성취수준 원문'));
+  ['A','B','C'].forEach(L=>{
+    const row=el('div','lv lv-'+L); row.appendChild(el('div','lvb',L));
+    const t=el('div','lvt'); t.appendChild(hl(r[L],terms)); row.appendChild(t); pane.appendChild(row);
+  });
+
+  if(ed.samples.length){
+    pane.appendChild(secTitle('예시 평가 도구','성취수준 원문'));
+    ed.samples.forEach(s=>{
+      const c=el('div','card');
+      const h=el('div');
+      if(s.tool) h.appendChild(el('span','pill solid',s.tool));
+      if(s.score) h.appendChild(el('span','pill','배점 '+s.score));
+      (s.comp||[]).forEach(x=>h.appendChild(el('span','pill',x+' 역량')));
+      c.appendChild(h);
+      if(s.theme) c.appendChild(el('div',null,'주제: '+s.theme)).style.cssText='font-size:12.5px;margin-top:4px';
+      if((s.elements||[]).length){
+        c.appendChild(el('div','catname','평가 요소'));
+        const u=el('ul','tight'); s.elements.forEach(x=>u.appendChild(el('li',null,x))); c.appendChild(u);
+      }
+      (s.note||[]).forEach(x=>{ const p=el('div',null,x);
+        p.style.cssText='font-size:12.5px;color:var(--dim);margin-top:5px'; c.appendChild(p); });
+      pane.appendChild(c);
+    });
+  } else {
+    pane.appendChild(el('div','hint',
+      '이 성취기준에는 교육과정 자료의 예시 평가 도구가 따로 없습니다. 위 평가 방법 제안과 성취수준을 근거로 문항을 만드시고, 더 많은 예시는 국가 학생평가 지원포털에서 확인하실 수 있습니다.'));
+  }
+  const src=el('div','card plain');
+  src.appendChild(el('div','catname','평가 자료를 더 찾으려면'));
+  const a=el('a',null,'국가 학생평가 지원포털 (stas.moe.go.kr)');
+  a.href='https://stas.moe.go.kr/cmn/main'; a.target='_blank'; a.rel='noopener';
+  src.appendChild(a);
+  src.appendChild(el('div',null,'교과별 수행평가 도구, 서·논술형 평가 도구, 채점 기준 예시를 제공합니다. 자료를 내려받으려면 회원 가입·로그인이 필요합니다.'))
+     .style.cssText='font-size:12.5px;color:var(--dim);margin-top:4px';
+  pane.appendChild(src);
+
+  const bar=el('div','dact');
+  const b1=el('button','btn on','평가계획 한 줄 복사');
+  b1.onclick=()=>copy([r.c, ed.area, td.summary, ed.elements.join(' / '),
+    ed.ways.map(x=>x.m).slice(0,2).join(', '), ed.count].join('\t'), b1);
+  const b2=el('button','btn','이 성취기준 MD');
+  b2.onclick=()=>download(`${r.c.replace(/[\[\]]/g,'')}.md`, mdOf([r]), 'text/markdown');
+  const b3=el('button','btn','Word 문서');
+  b3.onclick=()=>download(`${r.c.replace(/[\[\]]/g,'')}.doc`, docOf([r]), 'application/msword');
+  bar.appendChild(b1); bar.appendChild(b2); bar.appendChild(b3);
+  pane.appendChild(bar);
+}
+
+/* ============================================================
+   개념 지도 — 힘 기반 배치, 확대·이동·끌기·펼치기
+   ============================================================ */
+const MAPCFG={scope:'bandCross',showDom:true,showSeq:true,depth:1};
+
+function newMap(root){
+  return {nodes:new Map(),links:[],center:root.c,expanded:new Set(),
+          tx:0,ty:0,k:1,started:false};
+}
+function nodeId(t,v){ return t+':'+v; }
+function addNode(M,t,v,label,sub,ref){
+  const id=nodeId(t,v);
+  if(!M.nodes.has(id)){
+    const a=Math.random()*6.283, rr=120+Math.random()*120;
+    M.nodes.set(id,{id,type:t,key:v,label,sub,ref,
+      x:460+Math.cos(a)*rr,y:280+Math.sin(a)*rr,vx:0,vy:0,fx:null,fy:null});
+  }
+  return M.nodes.get(id);
+}
+function addLink(M,a,b,type){
+  if(a===b) return;
+  if(M.links.some(l=>(l.a===a&&l.b===b)||(l.a===b&&l.b===a))) return;
+  M.links.push({a,b,type:type||''});
+}
+function expandStd(M,r,isCenter){
+  const c=addNode(M,'std',r.c,r.c,`${r.subj} · ${r.a}`,r);
+  if(isCenter) c.center=true;
+  if(MAPCFG.showDom&&r.dom){
+    const d=addNode(M,'dom',r.subj+'|'+r.dom,r.dom,r.subj+' 영역',null);
+    addLink(M,c,d,'dom');
+  }
+  conceptsOf(r,5).forEach(t=>{
+    const n=addNode(M,'con',t,t,'개념',null);
+    addLink(M,c,n,'con');
+  });
+  if(MAPCFG.showSeq){
+    const ser=seriesOf(r);
+    if(ser){
+      [-1,1].forEach(dir=>{
+        const tb=r.b+dir; if(tb<0||tb>=BANDS.length) return;
+        const cand=ser.filter(o=>o.b===tb).map(o=>({o,s:cos(r._v,o._v)})).sort((x,y)=>y.s-x.s)[0];
+        if(cand){ const n=addNode(M,'std',cand.o.c,cand.o.c,`${shortBand(cand.o.band)} · ${cand.o.subj}`,cand.o);
+          addLink(M,c,n,'seq'); }
+      });
+    }
+  }
+  M.expanded.add('std:'+r.c);
+}
+function expandConcept(M,tok){
+  const n=M.nodes.get(nodeId('con',tok)); if(!n) return;
+  const root=STD.find(r=>r.c===M.center);
+  const pool=(CONIDX.get(tok)||[]).filter(o=>o.c!==M.center&&scopeFilter(root,o,MAPCFG.scope))
+    .map(o=>({o,s:cos(root._v,o._v)})).sort((a,b)=>b.s-a.s).slice(0,4);
+  pool.forEach(({o})=>{
+    const s=addNode(M,'std',o.c,o.c,`${shortBand(o.band)} · ${o.subj}`,o);
+    addLink(M,n,s,'con');
+  });
+  M.expanded.add('con:'+tok);
+}
+function buildMap(r){
+  const M=newMap(r);
+  expandStd(M,r,true);
+  conceptsOf(r,5).forEach(t=>expandConcept(M,t));
+  return M;
+}
+/* --- 힘 계산 --- */
+function tick(M,steps){
+  const ns=[...M.nodes.values()];
+  const LEN={con:155,dom:200,seq:215,'':160};
+  for(let s=0;s<(steps||1);s++){
+    for(let i=0;i<ns.length;i++){
+      const a=ns[i];
+      for(let j=i+1;j<ns.length;j++){
+        const b=ns[j];
+        let dx=b.x-a.x, dy=b.y-a.y, d2=dx*dx+dy*dy;
+        if(d2<1){ dx=Math.random()-0.5; dy=Math.random()-0.5; d2=1; }
+        const d=Math.sqrt(d2);
+        if(d>500) continue;
+        const f=(a.type==='std'||b.type==='std'? 13000:7000)/d2;
+        const ux=dx/d*f, uy=dy/d*f;
+        a.vx-=ux; a.vy-=uy; b.vx+=ux; b.vy+=uy;
+      }
+    }
+    M.links.forEach(l=>{
+      const L=LEN[l.type]||130;
+      let dx=l.b.x-l.a.x, dy=l.b.y-l.a.y;
+      const d=Math.sqrt(dx*dx+dy*dy)||1;
+      const f=(d-L)*0.045, ux=dx/d*f, uy=dy/d*f;
+      l.a.vx+=ux; l.a.vy+=uy; l.b.vx-=ux; l.b.vy-=uy;
+    });
+    ns.forEach(n=>{
+      n.vx+=(460-n.x)*0.004; n.vy+=(280-n.y)*0.004;
+      if(n.center){ n.vx+=(460-n.x)*0.06; n.vy+=(280-n.y)*0.06; }
+      if(n.fx!=null){ n.x=n.fx; n.y=n.fy; n.vx=0; n.vy=0; return; }
+      n.vx*=0.82; n.vy*=0.82;
+      n.x+=Math.max(-24,Math.min(24,n.vx));
+      n.y+=Math.max(-24,Math.min(24,n.vy));
+    });
+  }
+}
+function paneMap(pane,r){
+  if(!S.map||S.map.center!==r.c) S.map=buildMap(r);
+  const M=S.map;
+  pane.appendChild(el('div','hint')).innerHTML=(
+    '가운데가 지금 보는 성취기준입니다. 동그라미(개념)를 누르면 그 개념을 함께 다루는 성취기준이 펼쳐집니다. 네모(성취기준)를 누르면 <b>지도를 그대로 둔 채 내용을 먼저 보여 주고</b>, 옮겨 갈지는 그때 고르면 됩니다. 배경을 끌면 이동, 휠은 확대·축소, 노드를 끌면 자리를 옮길 수 있습니다.');
+
+  const wrap=el('div','mapwrap');
+  /* 노드를 누르면 옮겨 가기 전에 먼저 내용을 보여 준다.
+     지도를 벗어나지 않아야 여러 성취기준을 견주어 볼 수 있다. */
+  const card=el('div','peek'); card.hidden=true;
+  function peek(o){
+    card.innerHTML=''; card.hidden=false;
+    const x=el('button','peekx','✕'); x.onclick=()=>{ card.hidden=true; }; card.appendChild(x);
+    const tg=el('div','dtags');
+    [shortBand(o.band), o.subj, o.a].filter(Boolean).forEach(t=>tg.appendChild(el('span','tag',t)));
+    card.appendChild(tg);
+    card.appendChild(el('div','peekcode', o.c));
+    card.appendChild(el('div','peektext', o.t));
+    if(o.hae) card.appendChild(el('div','peekhae', o.hae.replace(/^\[[^\]]+\]\s*/,'').slice(0,160)
+      + (o.hae.length>170?'…':'')));
+    const kw=commonKw(r,o);
+    if(kw&&kw.length) card.appendChild(el('div','lenswhy','함께 걸리는 말: '+kw.slice(0,5).join(' · ')));
+    const act=el('div','dact');
+    const b1=el('button','btn on','이 성취기준 보기');
+    b1.onclick=()=>{ goto(o,{tab:'std'}); };
+    const b2=el('button','btn','이것을 가운데 두고 지도 보기');
+    b2.onclick=()=>{ goto(o,{tab:'map'}); };
+    const b3=el('button','btn', S.cart.has(o.c)?'바구니에 있음':'수업 바구니');
+    b3.onclick=()=>{ S.cart.add(o.c); saveCart(); b3.textContent='바구니에 있음'; updateCart(); };
+    act.appendChild(b1); act.appendChild(b2); act.appendChild(b3);
+    card.appendChild(act);
+  }
+  const bar=el('div','mapbar');
+  [['bandCross','같은 학년군·다른 교과'],['band','같은 학년군'],['subject','같은 교과'],['all','전체']]
+    .forEach(([k,l])=>{ const b=el('button','btn sm'+(MAPCFG.scope===k?' on':''),l);
+      b.onclick=()=>{ MAPCFG.scope=k; S.map=null; renderDetail(); }; bar.appendChild(b); });
+  bar.appendChild(el('span',null,'|')).style.color='var(--faint)';
+  const bd=el('button','btn sm'+(MAPCFG.showDom?' on':''),'영역');
+  bd.onclick=()=>{ MAPCFG.showDom=!MAPCFG.showDom; S.map=null; renderDetail(); }; bar.appendChild(bd);
+  const bs=el('button','btn sm'+(MAPCFG.showSeq?' on':''),'위계');
+  bs.onclick=()=>{ MAPCFG.showSeq=!MAPCFG.showSeq; S.map=null; renderDetail(); }; bar.appendChild(bs);
+  const bAllC=el('button','btn sm','모든 개념 펼치기');
+  bAllC.onclick=()=>{ [...M.nodes.values()].filter(n=>n.type==='con').forEach(n=>expandConcept(M,n.key));
+    tick(M,300); draw(); }; bar.appendChild(bAllC);
+  const bRe=el('button','btn sm','처음으로');
+  bRe.onclick=()=>{ S.map=null; renderDetail(); }; bar.appendChild(bRe);
+  const bAdd=el('button','btn sm','보이는 성취기준 모두 담기');
+  bAdd.onclick=()=>{ [...M.nodes.values()].filter(n=>n.ref).forEach(n=>S.cart.add(n.ref.c));
+    saveCart(); render(); }; bar.appendChild(bAdd);
+  wrap.appendChild(bar);
+
+  const svg=svgEl('svg',{class:'map',viewBox:'0 0 920 560'});
+  const gRoot=svgEl('g');
+  svg.appendChild(gRoot);
+  wrap.appendChild(svg);
+  wrap.appendChild(card);
+  pane.appendChild(wrap);
+
+  const lg=el('div','legend');
+  [['b sq','네모 = 성취기준'],['b','동그라미 = 개념'],['i','선 = 개념 공유'],['i d','점선 = 학년군 위계']]
+    .forEach(([c,t])=>{ const s=el('span'); s.appendChild(el(c.startsWith('b')?'b':'i',c.slice(2)));
+      s.appendChild(document.createTextNode(t)); lg.appendChild(s); });
+  pane.appendChild(lg);
+
+  if(!M.started){ tick(M,420); M.started=true; }
+
+  function draw(){
+    gRoot.innerHTML='';
+    gRoot.setAttribute('transform',`translate(${M.tx},${M.ty}) scale(${M.k})`);
+    const ge=svgEl('g'); gRoot.appendChild(ge);
+    M.links.forEach(l=>{
+      const p=svgEl('line',{x1:l.a.x,y1:l.a.y,x2:l.b.x,y2:l.b.y,
+        class:'edge'+(l.type==='seq'?' seq':'')+((l.a.center||l.b.center)?' hot':'')});
+      ge.appendChild(p);
+    });
+    [...M.nodes.values()].forEach(n=>{
+      const g=svgEl('g',{class:'nd '+(n.type==='con'?'concept':n.type==='dom'?'dom':'')+(n.center?' center':'')});
+      if(n.type==='con'){
+        const w=Math.max(46,n.label.length*13+18);
+        g.appendChild(svgEl('rect',{x:n.x-w/2,y:n.y-15,width:w,height:30,rx:15,class:'box'}));
+        const t=svgEl('text',{x:n.x,y:n.y+4,'text-anchor':'middle','font-size':13,'font-weight':700});
+        t.textContent=n.label; g.appendChild(t);
+        if(!M.expanded.has('con:'+n.key)){
+          const p=svgEl('text',{x:n.x+w/2-2,y:n.y-11,'text-anchor':'middle','font-size':13,'font-weight':800});
+          p.textContent='+'; g.appendChild(p);
+        }
+      } else {
+        const w=n.center?210:150, h=n.center?52:40;
+        g.appendChild(svgEl('rect',{x:n.x-w/2,y:n.y-h/2,width:w,height:h,rx:7,class:'box'}));
+        const t1=svgEl('text',{x:n.x,y:n.y-(n.center?6:3),'text-anchor':'middle',
+          'font-size':n.center?14:12,'font-weight':800,'font-family':'Consolas,D2Coding,monospace'});
+        t1.textContent=n.label; g.appendChild(t1);
+        const t2=svgEl('text',{x:n.x,y:n.y+(n.center?15:13),'text-anchor':'middle',
+          'font-size':n.center?11.5:10.5,'font-weight':600,opacity:.8});
+        t2.textContent=(n.sub||'').slice(0,20); g.appendChild(t2);
+      }
+      if(n.ref){ const ti=svgEl('title'); ti.textContent=n.ref.c+' '+n.ref.t; g.appendChild(ti); }
+      g.__n=n; ge.appendChild(g);
+    });
+  }
+  draw();
+
+  /* 상호작용 */
+  let drag=null, panning=null;
+  const pt=ev=>{ const b=svg.getBoundingClientRect();
+    const x=(ev.clientX-b.left)*920/b.width, y=(ev.clientY-b.top)*560/b.height;
+    return {x:(x-M.tx)/M.k, y:(y-M.ty)/M.k, sx:x, sy:y}; };
+  svg.addEventListener('pointerdown',ev=>{
+    const g=ev.target.closest('g.nd');
+    const p=pt(ev);
+    if(g&&g.__n){ drag={n:g.__n,moved:false,ox:p.x-g.__n.x,oy:p.y-g.__n.y}; g.__n.fx=g.__n.x; g.__n.fy=g.__n.y; }
+    else { panning={sx:p.sx,sy:p.sy,tx:M.tx,ty:M.ty}; svg.classList.add('drag'); }
+    svg.setPointerCapture(ev.pointerId);
+  });
+  svg.addEventListener('pointermove',ev=>{
+    const p=pt(ev);
+    if(drag){ drag.moved=true; drag.n.fx=p.x-drag.ox; drag.n.fy=p.y-drag.oy;
+      tick(M,3); draw(); }
+    else if(panning){ M.tx=panning.tx+(p.sx-panning.sx); M.ty=panning.ty+(p.sy-panning.sy); draw(); }
+  });
+  svg.addEventListener('pointerup',ev=>{
+    if(drag){
+      const n=drag.n;
+      if(!drag.moved){
+        if(n.type==='con'){ expandConcept(M,n.key); tick(M,220); draw(); }
+        else if(n.ref&&!n.center){ peek(n.ref); n.fx=null; n.fy=null; drag=null; panning=null;
+          svg.classList.remove('drag'); return; }
+      }
+      n.fx=null; n.fy=null; drag=null;
+    }
+    panning=null; svg.classList.remove('drag');
+  });
+  svg.addEventListener('wheel',ev=>{
+    ev.preventDefault();
+    const p=pt(ev), f=ev.deltaY<0?1.12:1/1.12, nk=Math.max(0.35,Math.min(2.6,M.k*f));
+    M.tx=p.sx-(p.sx-M.tx)*(nk/M.k); M.ty=p.sy-(p.sy-M.ty)*(nk/M.k); M.k=nk; draw();
+  },{passive:false});
+}
+
+/* ============================================================
+   내보내기
+   ============================================================ */
+const SRC = () => (window.__SRC||[]).map(x=>'> - '+x).join('\n');
+function mdOf(rows){
+  const L=[];
+  L.push('# 2022 개정 교육과정 수업 설계 자료');
+  L.push('');
+  L.push('> **자료 출처**');
+  L.push(SRC());
+  L.push('> ');
+  L.push('> 성취기준·해설·성취수준·내용 체계·핵심 아이디어는 위 문서에서 그대로 옮긴 것입니다.');
+  L.push('> **「개념 기반 탐구 초안」 항목(개념적 렌즈·일반화 문장·탐구 질문)은 인공지능이 만든 초안입니다. 반드시 검토하고 고쳐서 사용해 주세요.**');
+  L.push('');
+  rows.forEach(r=>{
+    const k=cbi(r), dm=domOf(r), ct=contentOf(r), a=areaOf(r), gd=guideOf(r);
+    L.push(`---`); L.push('');
+    L.push(`## ${r.c} ${r.subj} · ${shortBand(r.band)}`);
+    L.push('');
+    L.push(`- 영역: ${r.a}${dm&&dm.name!==r.a?` (내용 체계 영역: ${dm.name})`:''}`);
+    L.push('');
+    L.push(`### 성취기준`); L.push(r.t); L.push('');
+    if(r.hae){ L.push(`### 성취기준 해설`); L.push(r.hae); L.push(''); }
+    L.push(`### 성취수준`);
+    ['A','B','C'].forEach(x=>L.push(`- **${x}** ${r[x]}`));
+    L.push('');
+    if(r.q&&r.q.length){ L.push(`### 교육과정에 제시된 탐구 활동`); r.q.forEach(x=>L.push(`- ${x}`)); L.push(''); }
+    if(dm&&dm.idea.length){ L.push(`### 핵심 아이디어 (${dm.name} 영역)`); dm.idea.forEach(x=>L.push(`- ${x}`)); L.push(''); }
+    if(ct){ L.push(`### 내용 요소 (${shortBand(r.band)})`);
+      CATS.forEach(c=>{ if(ct[c]) L.push(`- **${c}**: ${ct[c].join(' / ')}`); }); L.push(''); }
+    if(a){ L.push(`### 영역별 성취수준 (${a.a})`);
+      ['A','B','C'].forEach(x=>{ if(!a.L[x]) return;
+        L.push(`- **${x}**`);
+        for(const [cat,txt] of Object.entries(a.L[x])) L.push(`  - ${cat}: ${txt}`); });
+      L.push(''); }
+    const td=teachDraft(r), ed=evalDraft(r);
+    L.push(`### 교수·학습 내용 초안 — AI 생성, 검토 필요`);
+    L.push(`- 요약(단원명 칸): ${td.summary}`);
+    td.steps.forEach(st=>{ L.push(`- **${st.ph} ${st.t}**  \`${st.cat}\`${st.ev?' `평가`':''}`);
+      st.d.forEach(x=>L.push(`  - ${x}`)); });
+    L.push('');
+    L.push(`### 평가 계획 초안 — AI 생성, 검토 필요`);
+    L.push(`- 평가 영역: ${ed.area} (중심 범주 ${ed.mainCat})`);
+    L.push(`- 평가 요소: ${ed.elements.join(' / ')}`);
+    L.push(`- 평가 방법: ${ed.ways.map(x=>x.m).join(', ')}`);
+    L.push(`- 평가 시기·횟수(권장): ${ed.when} 무렵 / ${ed.count}`);
+    L.push(`- 평가 기준: 위 성취수준 A·B·C 원문을 그대로 씁니다`);
+    L.push(`- 피드백 방안: ${ed.feedback}`);
+    if(ed.samples.length){
+      L.push(`- 예시 평가 도구(원문):`);
+      ed.samples.forEach(s2=>{
+        L.push(`  - ${s2.tool||''}${s2.score?' / 배점 '+s2.score:''}${s2.theme?' / 주제: '+s2.theme:''}`);
+        (s2.elements||[]).forEach(x=>L.push(`    - 평가 요소: ${x}`));
+      });
+    }
+    L.push('');
+    L.push(`### 개념 기반 탐구 초안 — AI 생성, 검토 필요`);
+    L.push(`- 개념적 렌즈: **${k.lens}** (${k.lensWhy})`);
+    L.push(`- 핵심 개념: ${k.concepts.join(', ')}`);
+    L.push(`- 일반화의 짝: ${k.pair[0]} ↔ ${k.pair[1]}`);
+    if(k.enduring) L.push(`- 영속적 이해(교육과정 핵심 아이디어 발췌): ${k.enduring.text}`);
+    L.push(`- 일반화 문장(초안):`);
+    k.gen.forEach((g,i)=>{ const s2=(k.genSrc||[])[i]||'렌즈';
+      L.push(`  - ${g}  \`${s2==='해설'?'성취기준 해설에서':s2==='성취기준'?'성취기준에서':'AI 초안'}\``); });
+    L.push(`- 탐구 질문(초안)`);
+    L.push(`  - 사실적: ${k.q.fact.join(' / ')}`);
+    L.push(`  - 개념적: ${k.q.conc.join(' / ')}`);
+    L.push(`  - 논쟁적: ${k.q.deb.join(' / ')}`);
+    L.push('');
+    if(gd&&gd.length){ L.push(`### 성취기준 적용 시 고려 사항`); gd.forEach(x=>L.push(`- ${x}`)); L.push(''); }
+  });
+  L.push('---'); L.push('');
+  L.push('## 이 자료로 개념 기반 탐구 수업을 설계하려면');
+  L.push('');
+  L.push('아래 글을 그대로 복사해, 이 파일과 함께 인공지능에게 주세요.');
+  L.push('');
+  L.push('```');
+  L.push('위 자료는 2022 개정 교육과정 원문에서 발췌한 성취기준·성취수준·내용 체계입니다.');
+  L.push('이 성취기준으로 개념 기반 탐구 수업을 설계하려고 합니다.');
+  L.push('');
+  L.push('바로 설계안을 쓰지 말고, 먼저 아래를 저에게 하나씩 물어봐 주세요.');
+  L.push('제가 답한 내용을 반영해서 설계안을 만들어 주세요.');
+  L.push('');
+  L.push('1) 이 수업이 끝났을 때 학생이 끝내 이해하기를 바라는 것은 무엇인가요?');
+  L.push('   (자료의 「일반화 문장」과 「영속적 이해」를 참고해 제 말로 다듬고 싶습니다)');
+  L.push('2) 어느 학년 몇 반이고 몇 차시로 계획하시나요? 학생들의 특성은 어떤가요?');
+  L.push('3) 아이들이 직접 해 볼 활동으로 무엇을 떠올리고 계신가요?');
+  L.push('4) 수업에 꼭 쓰고 싶은 자료나 장소, 학교 행사와의 연계가 있나요?');
+  L.push('5) 평가는 무엇을 근거로, 어떤 방법으로 하고 싶으신가요?');
+  L.push('6) 개념적 렌즈 잡기·일반화 문장 쓰기·탐구 질문 만들기 가운데');
+  L.push('   어느 부분을 더 도와드릴까요?');
+  L.push('');
+  L.push('제 답을 다 들은 뒤에 다음 차례로 만들어 주세요.');
+  L.push('  ① 개념적 렌즈와 핵심 개념 (자료의 초안을 검토해 고쳐 주세요)');
+  L.push('  ② 일반화 문장 2~3개 (학생 눈높이의 문장으로)');
+  L.push('  ③ 탐구 질문 (사실적 → 개념적 → 논쟁적 순서로)');
+  L.push('  ④ 차시별 탐구 흐름 (관계 맺기 → 집중하기 → 조사하기 → 조직 및 정리하기 →');
+  L.push('     일반화하기 → 전이하기 → 성찰하기)');
+  L.push('  ⑤ 평가 계획 (자료의 성취수준 A·B·C를 평가 기준으로 그대로 쓰고,');
+  L.push('     평가 방법과 채점 기준을 제안해 주세요)');
+  L.push('');
+  L.push('자료의 성취기준·성취수준·핵심 아이디어는 교육과정 원문이므로 바꾸지 말고,');
+  L.push('초안으로 표시된 부분만 다듬어 주세요.');
+  L.push('```');
+  return L.join('\n');
+}
+function planCSV(rows){
+  /* 정보공시 평가 계획 표 그대로: 한 성취기준을 성취수준 세 줄로 편다.
+     앞 칸은 첫 줄에만 채워, 엑셀에서 셀을 합치면 원래 표 모양이 된다. */
+  const head=['성취기준','단원명(교수학습 내용)','평가 영역','평가 요소','평가 방법',
+              '성취 수준','성취 수준 내용'];
+  const GRADE=[['잘함','A'],['보통','B'],['노력 요함','C']];
+  const out=[head.join(',')];
+  rows.forEach(r=>{
+    const td=teachDraft(r), ed=evalDraft(r);
+    const unit=(r.a||ed.area||'').trim();
+    const cell = unit ? unit + String.fromCharCode(10) + '(' + td.summary + ')' : td.summary;
+    const std = r.c + ' ' + r.t;
+    const elem = ed.elements[0] || toActivity(r.t);
+    const way = ed.ways.length? toolName(r, ed.ways[0].m) : '';
+    GRADE.forEach((g,i)=>{
+      out.push([ i===0? std:'', i===0? cell:'', i===0? ed.area:'',
+                 i===0? elem:'', i===0? way:'', g[0], r[g[1]]||'' ].map(csvEsc).join(','));
+    });
+  });
+  return String.fromCharCode(0xFEFF)+out.join(String.fromCharCode(13)+String.fromCharCode(10));
+
+}
+const csvEsc=v=>{ v=(v==null?'':String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+function toCSV(rows){
+  const head=['성취기준코드','학년군','교과','영역','내용체계영역','성취기준','성취기준해설',
+    '성취수준A','성취수준B','성취수준C','탐구활동','핵심아이디어','개념적렌즈','핵심개념'];
+  const body=rows.map(r=>{ const k=cbi(r), dm=domOf(r);
+    return [r.c,r.band,r.subj,r.a,dm?dm.name:'',r.t,r.hae||'',r.A,r.B,r.C,(r.q||[]).join(' / '),
+      dm?dm.idea.join(' / '):'',k.lens,k.concepts.join(', ')].map(csvEsc).join(','); });
+  return '﻿'+[head.join(','),...body].join('\r\n');
+}
+function download(name,text,mime){
+  const b=new Blob([text],{type:(mime||'text/csv')+';charset=utf-8'});
+  const u=URL.createObjectURL(b), a=document.createElement('a');
+  a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),1500);
+}
+function copy(text,btn){
+  const done=()=>{ if(btn){ const t=btn.textContent; btn.textContent='복사했습니다'; setTimeout(()=>btn.textContent=t,1200); } };
+  const fb=()=>{ const ta=document.createElement('textarea'); ta.value=text;
+    ta.style.cssText='position:fixed;opacity:0'; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ alert('복사에 실패했습니다.'); } ta.remove(); };
+  if(navigator.clipboard&&window.isSecureContext) navigator.clipboard.writeText(text).then(done,fb); else fb();
+}
+
+/* ============================================================
+   Word(.doc) 내보내기 — 교사가 바로 손보는 표 문서
+   ============================================================ */
+const esc2 = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function docOf(rows){
+  const H=[];
+  H.push(`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">`);
+  H.push(`<head><meta charset="utf-8"><title>수업·평가 계획</title><style>
+    body{font-family:"맑은 고딕",Malgun Gothic,sans-serif;font-size:10.5pt;line-height:1.5}
+    h1{font-size:16pt;margin:0 0 6pt} h2{font-size:12.5pt;margin:18pt 0 6pt;border-bottom:1pt solid #999;padding-bottom:3pt}
+    h3{font-size:11pt;margin:12pt 0 4pt}
+    table{border-collapse:collapse;width:100%;margin:6pt 0}
+    th,td{border:0.75pt solid #888;padding:5pt 6pt;vertical-align:top;font-size:10pt}
+    th{background:#eee;font-weight:bold;text-align:center;white-space:nowrap}
+    .src{font-size:8.5pt;color:#555} .warn{border:1pt dashed #888;padding:6pt;font-size:9pt;background:#f7f7f7}
+    ul{margin:3pt 0 3pt 16pt;padding:0} li{margin:1pt 0}
+  </style></head><body>`);
+  H.push(`<h1>2022 개정 교육과정 수업·평가 계획 자료</h1>`);
+  H.push(`<p class="src">${(window.__SRC||[]).map(esc2).join('<br>')}</p>`);
+  H.push(`<p class="warn"><b>교수·학습 내용, 평가 영역·요소·방법·횟수, 개념 기반 탐구 항목은 인공지능이 만든 초안입니다.</b>
+    반드시 검토하고 고쳐서 사용해 주세요. 성취기준·성취기준 해설·성취수준 A·B·C·핵심 아이디어는 원문 그대로입니다.</p>`);
+
+  H.push(`<h2>1. 평가 계획 표 (정보공시 서술용)</h2>`);
+  H.push(`<table><tr><th>시기</th><th>교과</th><th>성취기준</th><th>영역</th>
+    <th>단원명(교수·학습 내용)</th><th>평가 요소</th><th>평가 방법</th><th>횟수</th></tr>`);
+  rows.forEach(r=>{ const td=teachDraft(r), ed=evalDraft(r);
+    H.push(`<tr><td></td><td>${esc2(r.subj)}</td>
+      <td>${esc2(r.c)}<br>${esc2(r.t)}</td><td>${esc2(ed.area)}</td>
+      <td>${esc2(td.summary)}</td><td>${esc2(ed.elements.join(' / '))}</td>
+      <td>${esc2(ed.ways.map(x=>x.m).slice(0,2).join(', '))}</td><td>${esc2(ed.count)}</td></tr>`); });
+  H.push(`</table>`);
+
+  rows.forEach(r=>{
+    const k=cbi(r), dm=domOf(r), ct=contentOf(r), a=areaOf(r), gd=guideOf(r), td=teachDraft(r), ed=evalDraft(r);
+    H.push(`<h2>${esc2(r.c)} ${esc2(r.subj)} · ${esc2(shortBand(r.band))}</h2>`);
+    H.push(`<table><tr><th style="width:14%">성취기준</th><td>${esc2(r.t)}</td></tr>`);
+    H.push(`<tr><th>영역</th><td>${esc2(r.a)}${dm&&dm.name!==r.a?` (내용 체계 영역: ${esc2(dm.name)})`:''}</td></tr>`);
+    if(r.hae) H.push(`<tr><th>성취기준 해설</th><td>${esc2(r.hae)}</td></tr>`);
+    H.push(`<tr><th>성취수준 A</th><td>${esc2(r.A)}</td></tr>`);
+    H.push(`<tr><th>성취수준 B</th><td>${esc2(r.B)}</td></tr>`);
+    H.push(`<tr><th>성취수준 C</th><td>${esc2(r.C)}</td></tr></table>`);
+    H.push(`<h3>교수·학습 내용 (초안)</h3><p><b>${esc2(td.summary)}</b></p><ul>`);
+    td.steps.forEach(st=>{ H.push(`<li><b>${esc2(st.ph)} ${esc2(st.t)}</b> (${esc2(st.cat)}${st.ev?', 평가':''})<ul>`
+      + st.d.map(x=>`<li>${esc2(x)}</li>`).join('') + `</ul></li>`); });
+    H.push(`</ul>`);
+    if(r.q&&r.q.length){ H.push(`<h3>교육과정에 제시된 탐구 활동</h3><ul>`);
+      r.q.forEach(x=>H.push(`<li>${esc2(x)}</li>`)); H.push(`</ul>`); }
+    if(dm&&dm.idea.length){ H.push(`<h3>핵심 아이디어 (${esc2(dm.name)} 영역)</h3><ul>`);
+      dm.idea.forEach(x=>H.push(`<li>${esc2(x)}</li>`)); H.push(`</ul>`); }
+    if(ct){ H.push(`<h3>내용 요소 (${esc2(shortBand(r.band))})</h3><table>`);
+      CATS.forEach(c=>{ if(ct[c]) H.push(`<tr><th style="width:14%">${esc2(c)}</th><td>${esc2(ct[c].join(' / '))}</td></tr>`); });
+      H.push(`</table>`); }
+    H.push(`<h3>평가 계획 (초안)</h3><table>
+      <tr><th style="width:14%">평가 영역</th><td>${esc2(ed.area)} (중심 범주 ${esc2(ed.mainCat)})</td></tr>
+      <tr><th>평가 요소</th><td>${esc2(ed.elements.join(' / '))}</td></tr>
+      <tr><th>평가 시기·횟수</th><td>${esc2(ed.when+' 무렵 / '+ed.count)}</td></tr>
+      <tr><th>피드백 방안</th><td>${esc2(ed.feedback)}</td></tr>
+      <tr><th>평가 방법</th><td>${esc2(ed.ways.map(x=>x.m+' — '+x.why).join('<br>')).replace(/&lt;br&gt;/g,'<br>')}</td></tr>
+      <tr><th>평가 횟수</th><td>${esc2(ed.count)}</td></tr></table>`);
+    if(ed.samples.length){ H.push(`<h3>예시 평가 도구 (원문)</h3><ul>`);
+      ed.samples.forEach(s2=>H.push(`<li>${esc2(s2.tool||'')}${s2.score?' / 배점 '+esc2(s2.score):''}${s2.theme?' / '+esc2(s2.theme):''}
+        ${(s2.elements||[]).length? '<br>평가 요소: '+esc2(s2.elements.join(' / ')):''}</li>`));
+      H.push(`</ul>`); }
+    H.push(`<h3>개념 기반 탐구 (초안)</h3><table>
+      <tr><th style="width:14%">개념적 렌즈</th><td>${esc2(k.lens)}</td></tr>
+      <tr><th>핵심 개념</th><td>${esc2(k.concepts.join(', '))}</td></tr>`);
+    if(k.enduring) H.push(`<tr><th>영속적 이해<br><span class="src">(핵심 아이디어 원문)</span></th><td>${esc2(k.enduring.text)}</td></tr>`);
+    H.push(`<tr><th>일반화</th><td>${k.gen.map(esc2).join('<br>')}</td></tr>
+      <tr><th>사실적 질문</th><td>${k.q.fact.map(esc2).join('<br>')}</td></tr>
+      <tr><th>개념적 질문</th><td>${k.q.conc.map(esc2).join('<br>')}</td></tr>
+      <tr><th>논쟁적 질문</th><td>${k.q.deb.map(esc2).join('<br>')}</td></tr></table>`);
+    if(gd&&gd.length){ H.push(`<h3>성취기준 적용 시 고려 사항 (원문)</h3><ul>`);
+      gd.forEach(x=>H.push(`<li>${esc2(x)}</li>`)); H.push(`</ul>`); }
+  });
+  H.push(`</body></html>`);
+  return H.join('\n');
+}
+
+/* ============================================================
+   수업 바구니 · 교과 살펴보기 · 도움말 · 시작
+   ============================================================ */
+function saveCart(){ try{ localStorage.setItem('cart2022',JSON.stringify([...S.cart])); }catch(e){} updateCart(); }
+function updateCart(){ $('#cart').hidden=S.cart.size===0; $('#cartN').textContent=S.cart.size+'개'; }
+const cartRows=()=>STD.filter(r=>S.cart.has(r.c));
+
+function bindEvents(){
+  $('#btnAll').onclick=()=>{ filtered().forEach(r=>S.cart.add(r.c)); saveCart(); render(); };
+  $('#btnSort').onclick=()=>{ S.sort=S.sort==='rel'?'code':'rel'; render(); };
+  $('#cartCsv').onclick=()=>download(`수업바구니_${S.cart.size}건.csv`,toCSV(cartRows()));
+  $('#cartPlan').onclick=()=>download(`평가계획_${S.cart.size}건.csv`,planCSV(cartRows()));
+  $('#cartMd').onclick=()=>download(`수업설계자료_${S.cart.size}건.md`,mdOf(cartRows()),'text/markdown');
+  $('#cartDoc').onclick=()=>download(`수업평가계획_${S.cart.size}건.doc`,docOf(cartRows()),'application/msword');
+  $('#cartClear').onclick=()=>{ if(confirm('담은 성취기준을 모두 비울까요?')){ S.cart.clear(); saveCart(); render(); } };
+  $('#cartCopy').onclick=()=>copy(['성취기준코드\t학년군\t교과\t영역\t성취기준',
+    ...cartRows().map(r=>[r.c,r.band,r.subj,r.a,r.t].join('\t'))].join('\n'),$('#cartCopy'));
+  $('#cartView').onclick=()=>{
+    $('#dlgTitle').textContent=`수업 바구니 (${S.cart.size}개)`;
+    const b=$('#dlgBody'); b.innerHTML='';
+    const by={}; cartRows().forEach(r=>{ const k=shortBand(r.band)+' · '+r.subj; (by[k]=by[k]||[]).push(r); });
+    for(const [k,rows] of Object.entries(by)){
+      b.appendChild(el('h4',null,k)); const ul=el('ul');
+      rows.forEach(r=>{ const li=el('li'); li.appendChild(el('code',null,r.c));
+        li.appendChild(document.createTextNode(' '+r.t+' '));
+        const x=el('button','btn sm','빼기');
+        x.onclick=()=>{ S.cart.delete(r.c); saveCart(); render(); $('#cartView').click(); };
+        li.appendChild(x); ul.appendChild(li); });
+      b.appendChild(ul);
+    }
+    if(!S.cart.size) b.appendChild(el('p',null,'담은 성취기준이 없습니다.'));
+    $('#dlg').showModal();
+  };
+  $('#cartPrint').onclick=()=>{
+    const pa=$('#printarea'); pa.innerHTML='';
+    pa.appendChild(el('h2',null,'프로젝트 수업 성취기준 모음'));
+    (window.__SRC||[]).forEach(s=>{ const p=el('p',null,s); p.style.cssText='font-size:11px;color:#666;margin:2px 0'; pa.appendChild(p); });
+    cartRows().forEach(r=>{
+      const dm=domOf(r), k=cbi(r);
+      const box=el('div'); box.style.cssText='margin:13px 0;padding:9px 0;border-top:1px solid #ccc;page-break-inside:avoid';
+      const m=el('div',null,`${r.band} · ${r.subj} · ${r.a}`); m.style.cssText='font-size:11px;color:#666'; box.appendChild(m);
+      const h=el('div',null,`${r.c} ${r.t}`); h.style.cssText='font-weight:700;margin:3px 0 5px'; box.appendChild(h);
+      if(r.hae){ const p=el('div',null,'[해설] '+r.hae); p.style.cssText='font-size:12px;margin:2px 0'; box.appendChild(p); }
+      ['A','B','C'].forEach(L=>{ const p=el('div',null,`[${L}] ${r[L]}`);
+        p.style.cssText='font-size:12.5px;margin:2px 0'; box.appendChild(p); });
+      if(dm&&dm.idea.length){ const p=el('div',null,'[핵심 아이디어] '+dm.idea.join(' / '));
+        p.style.cssText='font-size:12px;margin:4px 0;color:#333'; box.appendChild(p); }
+      const p2=el('div',null,`[개념 기반 탐구 초안 — AI 생성, 검토 필요] 렌즈: ${k.lens} / 개념: ${k.concepts.join(', ')}`);
+      p2.style.cssText='font-size:12px;margin:4px 0;color:#333'; box.appendChild(p2);
+      pa.appendChild(box);
+    });
+    window.print();
+  };
+  let timer;
+  $('#q').addEventListener('input',e=>{ S.q=e.target.value; clearTimeout(timer); timer=setTimeout(render,120); });
+  $('#clr').onclick=()=>{ S.q=''; $('#q').value=''; render(); $('#q').focus(); };
+  document.addEventListener('keydown',e=>{
+    if(e.key==='/'&&document.activeElement.tagName!=='INPUT'){ e.preventDefault(); $('#q').focus(); $('#q').select(); }
+    if(e.key==='Escape'&&document.activeElement===$('#q')) $('#q').blur();
+  });
+  $('#btnTheme').onclick=()=>{
+    const dark=document.documentElement.dataset.theme==='dark';
+    document.documentElement.dataset.theme=dark?'':'dark';
+    $('#btnTheme').textContent=dark?'야간':'주간';
+    try{ localStorage.setItem('theme2022',dark?'':'dark'); }catch(e){}
+  };
+  if(document.documentElement.dataset.theme==='dark') $('#btnTheme').textContent='주간';
+  $('#btnGuide').onclick=openGuide;
+  $('#btnHelp').onclick=openHelp;
+}
+
+/* 교과 살펴보기 — 교과 성격·목표·역량·영역별 내용 체계 */
+function openGuide(){
+  const subj=(S.sel&&S.sel.subj)||SUBJ[0];
+  $('#dlgTitle').textContent='교과 살펴보기';
+  const b=$('#dlgBody'); b.innerHTML='';
+  const pick=el('div'); pick.style.marginBottom='10px';
+  SUBJ.forEach(s=>{ const x=el('button','btn sm'+(s===subj?' on':''),s);
+    x.style.margin='2px'; x.onclick=()=>showSubject(s); pick.appendChild(x); });
+  b.appendChild(pick);
+  const body=el('div'); b.appendChild(body);
+  function showSubject(s){
+    [...pick.children].forEach(c=>c.classList.toggle('on',c.textContent===s));
+    body.innerHTML='';
+    const m=SMETA[s];
+    if(!m){ body.appendChild(el('p',null,'이 교과는 교육과정 원문이 없습니다. (통합교과는 별책 4가 필요합니다)')); return; }
+    if(m.comp&&m.comp.length){ body.appendChild(el('h4',null,'교과 역량'));
+      const w=el('div'); m.comp.forEach(c=>w.appendChild(el('span','pill',c))); body.appendChild(w); }
+    (m.compText||[]).forEach(t=>{ const c=el('div','card'); c.textContent=t; body.appendChild(c); });
+    if(m.nature){ body.appendChild(el('h4',null,'성격')); const c=el('div','card plain'); c.textContent=m.nature; body.appendChild(c); }
+    if(m.goalText){ body.appendChild(el('h4',null,'목표')); const c=el('div','card plain'); c.textContent=m.goalText; body.appendChild(c); }
+    const doms=DOM[s]||[];
+    if(doms.length){
+      body.appendChild(el('h4',null,`내용 체계 — ${doms.length}개 영역`));
+      doms.forEach(d=>{
+        const det=el('details');
+        const sm=el('summary'); sm.style.cssText='cursor:pointer;font-weight:700;margin:6px 0';
+        sm.textContent=d.name; det.appendChild(sm);
+        if(d.idea.length){ det.appendChild(el('div','catname','핵심 아이디어'));
+          const ul=el('ul','tight'); d.idea.forEach(x=>ul.appendChild(el('li',null,x))); det.appendChild(ul); }
+        CATS.forEach(c=>{
+          const bands=d.content[c]; if(!bands) return;
+          det.appendChild(el('div','catname',c));
+          const ul=el('ul','tight');
+          BANDS.forEach(bn=>{ if(bands[bn]) ul.appendChild(el('li',null,`${shortBand(bn)}: ${bands[bn].join(' / ')}`)); });
+          det.appendChild(ul);
+        });
+        const btn=el('button','btn sm','이 영역 성취기준 보기');
+        btn.onclick=()=>{ S.subjs.clear(); S.subjs.add(SUBJ.indexOf(s)); S.areas.clear();
+          S.areas.add(s+'|'+d.name);
+          $('#dlg').close(); renderFilters(); render(); };
+        det.appendChild(btn);
+        body.appendChild(det);
+      });
+    }
+  }
+  showSubject(subj);
+  $('#dlg').showModal();
+}
+
+function openHelp(){
+  $('#dlgTitle').textContent='도움말';
+  $('#dlgBody').innerHTML=`
+  <h4>이 도구로 할 수 있는 일</h4>
+  <ul>
+    <li>성취기준과 <b>성취기준 해설</b>, A·B·C <b>성취수준</b>을 한자리에서 봅니다.</li>
+    <li>교육과정 <b>내용 체계</b>(영역·핵심 아이디어·범주별 내용 요소)를 성취기준과 함께 봅니다.</li>
+    <li><b>수업·평가 계획</b> 탭에서 <b>정보공시 평가의 단원명(교수·학습 내용) 칸</b>에 그대로 쓸 문장과
+        평가 영역·요소·방법·횟수 초안을 받습니다.</li>
+    <li><b>개념 기반 탐구</b> 초안(개념적 렌즈·일반화·탐구 질문)을 받아 수업 설계의 출발점으로 씁니다.</li>
+    <li>여러 성취기준을 담아 <b>Word 문서</b>·<b>MD 파일</b>·<b>평가계획 CSV</b>로 내려받아 그대로 활용합니다.</li>
+  </ul>
+  <h4>검색</h4>
+  <ul>
+    <li>낱말 <b>일부만</b> 넣어도 찾습니다. <code>생태</code> → 생태환경·생태계</li>
+    <li><b>띄어쓰기를 무시</b>합니다. <code>자료분석</code>은 “자료를 분석하여…”도 찾습니다.</li>
+    <li>여러 낱말을 띄어 쓰면 <b>모두 포함</b>된 것만. 꼭 맞는 것이 없으면 조각으로 나눠 다시 찾습니다.</li>
+    <li><b>코드</b>·<b>초성</b>도 됩니다. <code>2국01</code>, <code>ㅅㅌㅎㄱ</code></li>
+    <li>성취기준 본문뿐 아니라 <b>성취수준과 해설 속 낱말</b>까지 함께 찾습니다.</li>
+  </ul>
+  <h4>영역에 대하여</h4>
+  <ul>
+    <li>이 도구의 <b>영역</b>은 교육과정 <b>내용 체계</b>에서 핵심 아이디어 위에 놓인 제목을 가리킵니다.</li>
+    <li>국어·수학·도덕·체육·음악·미술·영어·실과는 성취기준의 영역과 내용 체계의 영역이 같습니다.</li>
+    <li><b>사회·과학</b>은 성취기준이 <b>단원</b> 단위로 제시되어 내용 체계의 영역과 다릅니다.
+        이 경우 내용 요소를 견주어 자동으로 이어 붙였고, 화면에 <i>자동 연결</i>이라고 표시합니다.</li>
+    <li>영역 칩의 <code>1~2·3~4·5~6</code> 표시는 그 영역이 학년군에 걸쳐 이어진다는 뜻입니다.</li>
+  </ul>
+  <h4>수업·평가 계획</h4>
+  <ul>
+    <li><b>교수·학습 내용</b>은 성취기준·내용 요소·탐구 활동으로 차시 흐름을 짜 초안을 만듭니다.
+        평가계획의 <i>단원명(교수·학습 내용)</i> 칸에 쓸 한 줄 요약도 함께 줍니다.</li>
+    <li><b>평가 방법</b>은 그 성취기준의 범주 성향(지식·이해 / 과정·기능 / 가치·태도)에 맞추어 제안합니다.</li>
+    <li><b>평가 기준</b>은 성취수준 A·B·C 원문을 그대로 씁니다.</li>
+    <li>교육과정 자료에 <b>예시 평가 도구</b>가 있는 성취기준은 평가 요소·도구 유형·배점을 원문 그대로 보여 줍니다.</li>
+    <li>더 많은 평가 도구는 <b>국가 학생평가 지원포털(stas.moe.go.kr)</b>에서 받을 수 있습니다. 내려받기에는 로그인이 필요합니다.</li>
+    <li><b>Word 문서</b>를 내려받으면 평가계획 표와 성취기준별 상세가 표로 정리되어 한글·워드에서 바로 손볼 수 있습니다.</li>
+    <li><b>평가계획 CSV</b>는 시기·성취기준·단원명·평가 영역·요소·방법·횟수·성취수준 칸이 채워진 표를 엑셀에서 바로 엽니다.</li>
+  </ul>
+  <h4>개념 기반 탐구 초안</h4>
+  <ul>
+    <li><b>영속적 이해</b>는 그 영역의 <b>핵심 아이디어 원문</b>을 그대로 가져옵니다.</li>
+    <li><b>개념</b>은 성취기준의 이름씨(명사)를 먼저 뽑고, 내용 체계의 내용 요소 가운데 그 성취기준과
+        맞물리는 것을 보태어 정합니다.</li>
+    <li><b>개념적 렌즈·일반화 문장·탐구 질문</b>은 <b>인공지능이 만든 초안</b>입니다. 반드시 검토하고 고쳐 쓰세요.</li>
+    <li><b>MD 파일</b> 끝에는 인공지능에게 줄 <b>설계 진행 지시문</b>이 들어 있습니다.
+        바로 설계안을 쓰지 않고 수업 의도·차시·활동·평가를 먼저 물어본 뒤 설계하도록 되어 있습니다.</li>
+  </ul>
+  <h4>개념 지도</h4>
+  <ul>
+    <li>동그라미(개념)를 누르면 그 개념을 함께 다루는 성취기준이 <b>펼쳐집니다</b>.</li>
+    <li>네모(성취기준)를 누르면 그 성취기준으로 옮겨 갑니다.</li>
+    <li>배경을 끌면 이동, 휠은 확대·축소, 노드를 끌면 자리를 옮깁니다.</li>
+  </ul>
+  <h4>내려받기</h4>
+  <ul>
+    <li><b>MD 내려받기</b> — 성취기준·해설·성취수준·내용 체계·탐구 초안이 담긴 마크다운 파일.
+        인공지능 대화창에 그대로 붙여 넣어 수업 설계를 이어갈 수 있습니다.</li>
+    <li><b>CSV</b>는 엑셀·한셀에서, <b>표로 복사</b>는 한글(HWP)에 붙여 넣으면 표가 됩니다.</li>
+    <li><b>인쇄/PDF</b>에서 <i>대상: PDF로 저장</i>을 고르면 PDF가 됩니다.</li>
+  </ul>
+  <h4>자료 출처</h4>
+  <ul>${(window.__SRC||[]).map(s=>'<li>'+s+'</li>').join('')}</ul>
+  <p style="color:var(--dim);font-size:12.5px">통합교과(바른 생활·슬기로운 생활·즐거운 생활)는 교육과정 원문이 포함되지 않아
+  성취기준과 성취수준만 제공합니다.</p>`;
+  $('#dlg').showModal();
+}
+
+/* ---------- 시작 ---------- */
+function boot(data){
+  BANDS=data.bands; SUBJ=data.subjects; STD=data.std; AREA=data.area;
+  DOM=data.dom; GUIDE=data.guide; GUIDEPG=data.guidePg||{}; INQACT=data.inqAct||{}; SMETA=data.subjMeta;
+  window.__SRC=data.meta.src||[];
+  window.__EVAL=data.eval||{};
+  buildIndex(); buildSeries(); buildConceptIndex();
+  $('#srcline').innerHTML=(data.meta.src||[]).join('<br>')+
+    `<br>성취기준 ${data.meta.nStd}개 · 성취기준 해설 ${data.meta.nHae}개 · 영역별 성취수준 ${data.meta.nArea}개`;
+  renderFilters(); bindEvents(); updateCart(); render();
+  $('#loading').remove();
+}
+
+fetch('data/app.json').then(r=>r.json()).then(boot).catch(e=>{
+  document.getElementById('loading').textContent='자료를 불러오지 못했습니다: '+e;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+{
+  "dataSha256": "179dc7063393a188fba0232e736246cc89aa5bb95e5f1a50a28d17ea87763c46",
+  "records": [
+    {
+      "code": "[4국01-06]",
+      "subject": "국어",
+      "standard": "주제에 적절한 의견과 이유를 제시하고 서로의 생각을 교환하며 토의한다.",
+      "file": "[별책5] 국어과 교육과정 - 초등만.pdf",
+      "pages": [
+        26
+      ],
+      "levelFile": "★(초)2022개정교육과정에따른성취수준(3~4학년군).pdf",
+      "levelPages": [
+        22
+      ],
+      "standardMatchIgnoringWhitespace": true,
+      "levelMatchIgnoringWhitespace": true,
+      "hae": "[4국01-06] 이 성취기준은 문제를 합리적으로 해결하기 위한 기초 능력으로서 토의 능력을 기르기 위해 설정하였다. 주제에 적절한 의견을 이유와 함께 제시하기, 상대의 의견을 구체적으로 파악하거나 의견과 이유의 적절성을 점검하기 위해 서로 묻고 답하기, 다른 사람의 생각 존중하기 등을 학습한다.",
+      "comparison": "공백·줄바꿈과 줄표/가운뎃점 이형을 정규화한 대조. 원본 JSON은 변경하지 않음.",
+      "notationNote": ""
+    },
+    {
+      "code": "[4사01-01]",
+      "subject": "사회",
+      "standard": "주변 여러 장소에서의 경험과 느낌을 다양한 방식으로 표현하고, 장소감을 나누며 서로 존중하는 태도를 지닌다.",
+      "file": "[별책7] 사회과 교육과정 - 초등만.pdf",
+      "pages": [
+        25
+      ],
+      "levelFile": "★(초)2022개정교육과정에따른성취수준(3~4학년군).pdf",
+      "levelPages": [
+        38
+      ],
+      "standardMatchIgnoringWhitespace": false,
+      "levelMatchIgnoringWhitespace": true,
+      "hae": "[4사01-01]은 학생들의 생활이 이루어지는 주변 여러 장소에서의 경험과 느낌을 글, 그림, 심상지도 등의 다양한 방식으로 표현하고, 이를 통해 사람마다 장소감의 차이가 나타날 수 있음을 이해하도록 설정한 것이다. 장소감이란 장소에 대한 인지, 감정, 태도, 행동을 포괄하는 것으로 개인이나 집단이 장소에 부여하는 의미나 관심을 뜻한다. 장소 경험을 공유하는 과정에서 장소감의 차이를 이해하고 서로 존중하며, 주변의 장소를 알아가면서 이에 대한 관심을 심화시키는 데 초점을 맞춘다.",
+      "comparison": "공백·줄바꿈과 줄표/가운뎃점 이형을 정규화한 대조. 원본 JSON은 변경하지 않음.",
+      "notationNote": "사회 코드: 공식 PDF [4사01–01], 앱 [4사01-01]."
+    },
+    {
+      "code": "[4도02-03]",
+      "subject": "도덕",
+      "standard": "공감의 태도가 필요한 이유를 이해하고 도덕적 상상력을 바탕으로 대상과 상황에 따라 감정을 나누는 방법을 탐구하여 실천한다.",
+      "file": "[별책6] 도덕과 교육과정 - 초등만.pdf",
+      "pages": [
+        18
+      ],
+      "levelFile": "★(초)2022개정교육과정에따른성취수준(3~4학년군).pdf",
+      "levelPages": [
+        56
+      ],
+      "standardMatchIgnoringWhitespace": true,
+      "levelMatchIgnoringWhitespace": true,
+      "hae": "",
+      "comparison": "공백·줄바꿈과 줄표/가운뎃점 이형을 정규화한 대조. 원본 JSON은 변경하지 않음.",
+      "notationNote": ""
+    },
+    {
+      "code": "[4수01-05]",
+      "subject": "수학",
+      "standard": "나눗셈이 이루어지는 실생활 상황과 연결하여 나눗셈의 의미를 알고, 곱셈과 나눗셈의 관계를 이해한다.",
+      "file": "[별책8] 수학과 교육과정 - 초등만.pdf",
+      "pages": [
+        23
+      ],
+      "levelFile": "★(초)2022개정교육과정에따른성취수준(3~4학년군).pdf",
+      "levelPages": [
+        66
+      ],
+      "standardMatchIgnoringWhitespace": true,
+      "levelMatchIgnoringWhitespace": true,
+      "hae": "",
+      "comparison": "공백·줄바꿈과 줄표/가운뎃점 이형을 정규화한 대조. 원본 JSON은 변경하지 않음.",
+      "notationNote": ""
+    },
+    {
+      "code": "[4과02-02]",
+      "subject": "과학",
+      "standard": "다양한 환경에 서식하는 동물을 조사하여 동물의 생김새와 생활 방식이 환경과 관련되어 있음을 설명할 수 있다.",
+      "file": "[별책9] 과학과 교육과정 - 초등만.pdf",
+      "pages": [
+        20
+      ],
+      "levelFile": "★(초)2022개정교육과정에따른성취수준(3~4학년군).pdf",
+      "levelPages": [
+        108
+      ],
+      "standardMatchIgnoringWhitespace": true,
+      "levelMatchIgnoringWhitespace": true,
+      "hae": "[4과02-02] 서식지에 따른 동물의 생김새와 생활 방식의 다양성을 다루고, 적응 개념은 다루지 않는다.",
+      "comparison": "공백·줄바꿈과 줄표/가운뎃점 이형을 정규화한 대조. 원본 JSON은 변경하지 않음.",
+      "notationNote": ""
+    },
+    {
+      "code": "[6실01-03]",
+      "subject": "실과",
+      "standard": "건강한 가정생활을 위해 가족원 모두에게 다양한 요구가 있음을 이해하여 서로에 대한 배려와 돌봄을 실천한다.",
+      "file": "[별책10] 실과(기술가정)정보과 교육과정 - 초등만.pdf",
+      "pages": [
+        18
+      ],
+      "levelFile": "★(초)2022개정교육과정에따른성취수준(5~6학년군).pdf",
+      "levelPages": [
+        160
+      ],
+      "standardMatchIgnoringWhitespace": true,
+      "levelMatchIgnoringWhitespace": true,
+      "hae": "[6실01-03] 이 성취기준은 삶의 기본적 조건인 의식주생활을 충족시키는 가족의 역할은 가족이 처한 상황이나 조건에 따라 다양할 수 있음을 알도록 하며, 이 과정에서 가정생활의 중요성과 가정일에 있어서 협력적 소통에 기반한 가족의 역할 분담에 대해 이해하고 실천하도록 한다.",
+      "comparison": "공백·줄바꿈과 줄표/가운뎃점 이형을 정규화한 대조. 원본 JSON은 변경하지 않음.",
+      "notationNote": ""
+    },
+    {
+      "code": "[4체01-05]",
+      "subject": "체육",
+      "standard": "자신의 신체적 특징을 긍정적으로 인식하고 운동 계획을 세워 안전하게 활동한다.",
+      "file": "[별책11] 체육과 교육과정 - 초등만.pdf",
+      "pages": [
+        16
+      ],
+      "levelFile": "★(초)2022개정교육과정에따른성취수준(3~4학년군).pdf",
+      "levelPages": [
+        139
+      ],
+      "standardMatchIgnoringWhitespace": true,
+      "levelMatchIgnoringWhitespace": false,
+      "hae": "[4체01-05]는 기본 체력운동을 통해 자신에게 적합한 운동 계획을 세우고 실천하기 위해 설정하였다. 체격, 체형, 체력 등 개인마다 다른 신체 특성을 긍정적으로 인식하고 자신의 신체 특성에 맞는 운동을 안전하고 효과적으로 수행하도록 한다.",
+      "comparison": "공백·줄바꿈과 줄표/가운뎃점 이형을 정규화한 대조. 원본 JSON은 변경하지 않음.",
+      "notationNote": "체육 성취수준: 공식 PDF ㆍ, 앱 ·. C는 PDF 140쪽으로 이어짐."
+    },
+    {
+      "code": "[4음02-03]",
+      "subject": "음악",
+      "standard": "다양한 종류의 음악을 듣고 음악의 분위기를 묘사하거나 쓰임을 이야기한다.",
+      "file": "[별책12] 음악과 교육과정 - 초등만.pdf",
+      "pages": [
+        16
+      ],
+      "levelFile": "★(초)2022개정교육과정에따른성취수준(3~4학년군).pdf",
+      "levelPages": [
+        153
+      ],
+      "standardMatchIgnoringWhitespace": true,
+      "levelMatchIgnoringWhitespace": true,
+      "hae": "[4음02-03] 이 성취기준은 다양한 분위기와 쓰임을 가진 음악을 듣고 경험하도록 함으로써 음악을 활용할 수 있는 능력을 기르도록 하기 위해 설정하였다. 악곡과 관련된 느낌과 감정, 분위기나 장면 등을 떠올려 보고, 이를 노래, 악기 연주, 신체표현, 그림, 영상, 글쓰기 등의 방법으로 묘사해 본다. 나아가 놀이, 의식, 노동 등 생활 속에서 다양하게 쓰이는 음악에 관해 이야기해 보며 음악 감상을 통한 경험을 확장하도록 하는 데 중점을 둔다.",
+      "comparison": "공백·줄바꿈과 줄표/가운뎃점 이형을 정규화한 대조. 원본 JSON은 변경하지 않음.",
+      "notationNote": ""
+    },
+    {
+      "code": "[4미02-02]",
+      "subject": "미술",
+      "standard": "기본적인 표현 재료와 용구의 특성을 이해하고 사용 방법을 익힐 수 있다.",
+      "file": "[별책13] 미술과 교육과정 - 초등만.pdf",
+      "pages": [
+        15
+      ],
+      "levelFile": "★(초)2022개정교육과정에따른성취수준(3~4학년군).pdf",
+      "levelPages": [
+        174
+      ],
+      "standardMatchIgnoringWhitespace": true,
+      "levelMatchIgnoringWhitespace": true,
+      "hae": "[4미02-02] 성취기준은 기본적인 표현 재료의 물성을 경험하고 표현 용구의 사용법을 충분히 익히는 활동에 중점을 둔다. 표현 재료와 용구는 단순히 표현 수단을 넘어 그 자체로서 학생들에게 새로운 느낌과 생각을 가지게 한다. 초등학교 3~4학년 수준에서 다룰 수 있는 기본적인 표현 재료에는 종이류(도화지, 색종이, 한지 등), 드로잉 재료(연필, 펜 등), 채색 재료(크레파스, 파스텔, 수채화물감, 아크릴물감, 먹 등), 조소 재료(찰흙, 종이죽, 공예용 철사 등)가 있으며 그 밖에 생활 속에서 익숙하게 다루고 있는 다양한 생활용품 및 디지털 매체를 활용할 수 있다.",
+      "comparison": "공백·줄바꿈과 줄표/가운뎃점 이형을 정규화한 대조. 원본 JSON은 변경하지 않음.",
+      "notationNote": ""
+    },
+    {
+      "code": "[4영01-07]",
+      "subject": "영어",
+      "standard": "적절한 전략을 활용하여 담화나 문장을 듣거나 읽는다.",
+      "file": "[별책14] 영어과 교육과정 - 초등만.pdf",
+      "pages": [
+        16
+      ],
+      "levelFile": "★(초)2022개정교육과정에따른성취수준(3~4학년군).pdf",
+      "levelPages": [
+        194
+      ],
+      "standardMatchIgnoringWhitespace": true,
+      "levelMatchIgnoringWhitespace": true,
+      "hae": "[4영01-07] 이 성취기준은 영어 듣기와 읽기 전략에 관한 것으로 실물, 그림, 동작 등의 시각 정보를 활용하여 담화의 상황이나 내용, 문장의 의미를 파악하는 것을 의미한다.",
+      "comparison": "공백·줄바꿈과 줄표/가운뎃점 이형을 정규화한 대조. 원본 JSON은 변경하지 않음.",
+      "notationNote": ""
+    }
+  ]
+}

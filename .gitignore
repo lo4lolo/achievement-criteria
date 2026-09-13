@@ -1,2 +1,6 @@
 .DS_Store
 Thumbs.db
+sources/text-cache.json
+tests/*.png
+__pycache__/
+node_modules/

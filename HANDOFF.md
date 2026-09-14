@@ -1,4 +1,8 @@
-# 작업 인수인계 · v2.1.0 · 2026-09-14
+# 작업 인수인계 · v2.1.1 · 2026-09-14
+
+## v2.1.1 · 상단 띠 삭제, 바구니 전체 해제
+
+사용자가 화면 맨 위 안내 띠를 무의미하다며 삭제를 요청했다. build.py가 더는 띠를 넣지 않고, release.js·success.js의 띠 선택 상자 코드도 지웠다(review-v6.js의 옛 선택 상자 코드는 release.js가 startReview를 덮어써 실행되지 않는다). ‘전체 담기’는 release.js의 `syncCartAll`이 목록 전체가 담겼는지 보고 ‘전체 해제’로 바꾼다. `filtered()`가 검색 강조 변수(HILITE·RELAX)를 초기화하므로 `listedRows`에서 되돌린다. ‘모두 비우기’는 바구니 개수 옆으로 옮겼다. verify.cjs는 사라진 선택 상자 대신 `goto`로 [4과02-02]를 연다.
 
 ## v2.1.0 · SUCCESS 모델로 설계
 

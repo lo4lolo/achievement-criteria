@@ -14,8 +14,9 @@ def replace(old, new):
 
 replace('<title>2022 개정 교육과정 초등 수업 설계 도우미</title>', '<title>확인용 · 교육과정 수업 설계 도우미</title>')
 replace('</style>', '\n' + (HERE/'review.css').read_text(encoding='utf-8') + '\n' + (HERE/'success.css').read_text(encoding='utf-8') + '\n</style>')
-replace('<header>', '''<header>
-<div class="review-banner"><strong>수정안 미리보기</strong><span>사회 ‘우리가 사는 곳’으로 탐구 설계 흐름을 확인해 보세요.</span><button class="btn" id="reviewSample">대표 사례 열기</button><span class="review-scope">기존 게시본과 별도로 저장됩니다</span></div>''')
+# No top review banner (removed at the user's request). The basket clear button sits next to the count so it is easy to find.
+replace('<button class="btn" id="cartClear">비우기</button>', '')
+replace('<span style="color:var(--dim);font-size:12px">수업 바구니</span>', '<span style="color:var(--dim);font-size:12px">수업 바구니</span><button class="btn" id="cartClear">모두 비우기</button>')
 # Preserve production local storage keys.
 
 
@@ -51,7 +52,7 @@ replace("L.push('2) 어느 학년 몇 반이고 몇 차시로 계획하시나요
 replace("L.push('  ④ 차시별 탐구 흐름 (관계 맺기 → 집중하기 → 조사하기 → 조직 및 정리하기 →');\n  L.push('     일반화하기 → 전이하기 → 성찰하기)');", "L.push('  ④ 교과서에서 학습한 내용을 바탕으로 확인할 학습 증거');")
 replace("fetch('data/app.json').then(r=>r.json()).then(boot).catch(e=>{", (HERE/'review.js').read_text(encoding='utf-8') + '\n' + (HERE/'review-v2.js').read_text(encoding='utf-8') + '\n' + (HERE/'review-v3.js').read_text(encoding='utf-8') + '\n' + (HERE/'review-v4.js').read_text(encoding='utf-8') + '\n' + (HERE/'review-v5.js').read_text(encoding='utf-8') + '\n' + (HERE/'review-v6.js').read_text(encoding='utf-8').replace('__PILOT_DESIGNS__', (HERE/'pilot-designs.json').read_text(encoding='utf-8')).replace('__PILOT_SOURCES__', (HERE/'pilot-source-audit.json').read_text(encoding='utf-8')) + '\n' + (HERE/'release.js').read_text(encoding='utf-8').replace('__DESIGN_RULES__', (HERE/'design-rules.json').read_text(encoding='utf-8')).replace('__TEXT_REPAIRS__', (ROOT/'data/text-repairs.json').read_text(encoding='utf-8')).replace('__SOURCE_INDEX__', (ROOT/'data/sources.json').read_text(encoding='utf-8')) + '\n' + (HERE/'success.js').read_text(encoding='utf-8').replace('__SUCCESS_MODEL__', (HERE/'success-model.json').read_text(encoding='utf-8')) + "\nPromise.resolve(" + data.replace('</', '<\\/') + ").then(boot).then(startReview).catch(e=>{")
 base=base.replace('const domName = r =>', 'let domName = r =>')
-base=base.replace('확인용 · 교육과정 수업 설계 도우미', '교육과정 수업 설계 도우미 v2.1.0').replace('수정안 미리보기','v2.1.0').replace('사회 ‘우리가 사는 곳’으로 탐구 설계 흐름을 확인해 보세요.','611개 성취기준 · 교사의 생각을 구체화하는 수업 설계').replace('기존 게시본과 별도로 저장됩니다','원문과 설계 제안을 구분합니다')
+base=base.replace('확인용 · 교육과정 수업 설계 도우미', '교육과정 수업 설계 도우미 v2.1.1').replace('사회 ‘우리가 사는 곳’으로 탐구 설계 흐름을 확인해 보세요.','611개 성취기준 · 교사의 생각을 구체화하는 수업 설계').replace('기존 게시본과 별도로 저장됩니다','원문과 설계 제안을 구분합니다')
 base='\n'.join(line.rstrip() for line in base.splitlines())+'\n'
 (ROOT/'index.html').write_text(base,encoding='utf-8')
-print('Built github/index.html v2.1.0; original JSON SHA256:',hashlib.sha256(data.encode()).hexdigest())
+print('Built github/index.html v2.1.1; original JSON SHA256:',hashlib.sha256(data.encode()).hexdigest())

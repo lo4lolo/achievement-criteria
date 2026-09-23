@@ -1,0 +1,84 @@
+{
+  "result": "PASS",
+  "version": "2.1.3",
+  "failures": [],
+  "unlinked": 48,
+  "reviewedLists": 42,
+  "counts": [
+    {
+      "subject": "국어",
+      "total": 87,
+      "linked": 87
+    },
+    {
+      "subject": "사회",
+      "total": 49,
+      "linked": 49
+    },
+    {
+      "subject": "도덕",
+      "total": 24,
+      "linked": 24
+    },
+    {
+      "subject": "수학",
+      "total": 121,
+      "linked": 121
+    },
+    {
+      "subject": "과학",
+      "total": 102,
+      "linked": 102
+    },
+    {
+      "subject": "실과",
+      "total": 39,
+      "linked": 39
+    },
+    {
+      "subject": "체육",
+      "total": 49,
+      "linked": 49
+    },
+    {
+      "subject": "음악",
+      "total": 26,
+      "linked": 26
+    },
+    {
+      "subject": "미술",
+      "total": 26,
+      "linked": 26
+    },
+    {
+      "subject": "영어",
+      "total": 40,
+      "linked": 40
+    },
+    {
+      "subject": "바른 생활",
+      "total": 16,
+      "linked": 0
+    },
+    {
+      "subject": "슬기로운 생활",
+      "total": 16,
+      "linked": 0
+    },
+    {
+      "subject": "즐거운 생활",
+      "total": 16,
+      "linked": 0
+    }
+  ],
+  "checks": [
+    "source-based missing item assertions",
+    "merged elementary cells",
+    "middle-school contamination excluded",
+    "English and ethics aliases",
+    "social standard-specific links",
+    "integrated-subject source limitation",
+    "CSV and SUCCESS linked area",
+    "no page errors"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "[2국05-03]": {
+    "sourceFile": "★(초)2022개정교육과정에따른성취수준(1~2학년군).pdf",
+    "sourceSha256": "aff4e767ceb70e2dee28fabea1f37af459fac67a34b4cde7931c43096bba6b0d",
+    "fields": {
+      "levelPages": [
+        23,
+        24
+      ],
+      "levelsVisualVerified": true,
+      "basis": "자동 문자열 대조 및 페이지 경계를 넘는 표의 성취수준 A·B·C 원문 화면 대조(2026-09-24)"
+    }
+  },
+  "[6도03-03]": {
+    "sourceFile": "★(초)2022개정교육과정에따른성취수준(5~6학년군).pdf",
+    "sourceSha256": "94dc29ddec85eb758b7e305375462d55a8298dddc7f0a43869d450727a9b583a",
+    "fields": {
+      "levelPages": [
+        58,
+        59
+      ],
+      "levelsVisualVerified": true,
+      "basis": "성취수준 공식 자료에 수록된 성취기준과 A·B·C를 PDF 58~59쪽 표의 원문 화면으로 대조(2026-09-24)",
+      "file": "★(초)2022개정교육과정에따른성취수준(5~6학년군).pdf",
+      "pages": [
+        58,
+        59
+      ],
+      "curriculumFromLevels": true,
+      "standardVisualVerified": true
+    }
+  }
+}

@@ -46,6 +46,14 @@ for r in data['std']:
  if r['c'] in repairs:
   repair=repairs[r['c']];result[r['c']]['repairNote']=repair['note']
   if 'C' in repair['fields']:result[r['c']].update({'levelPages':[repair['page']],'levelsVisualVerified':True})
+# Preserve documented visual checks only while the exact source PDF is unchanged.
+visual_path=ROOT/'data/source-verifications.json'
+if visual_path.exists():
+ for code,entry in json.loads(visual_path.read_text('utf-8')).items():
+  if cache.get(entry['sourceFile'],{}).get('sha256')==entry['sourceSha256']:
+   result[code].update(entry['fields'])
 out={'dataSha256':hashlib.sha256((ROOT/'data/app.json').read_bytes()).hexdigest(),'files':{n:cache[n]['sha256'] for n in texts},'records':result,'counts':{'total':len(result),'standardMatched':sum(x['standardVerified'] for x in result.values()),'levelsMatched':sum(x['levelsVerified'] for x in result.values())}}
+out['counts']['standardVisualVerified']=sum(bool(x.get('standardVisualVerified')) for x in result.values())
+out['counts']['levelsVisualVerified']=sum(bool(x.get('levelsVisualVerified')) for x in result.values())
 (ROOT/'data/sources.json').write_text(json.dumps(out,ensure_ascii=False,separators=(',',':')),'utf-8')
 print(json.dumps(out['counts']))

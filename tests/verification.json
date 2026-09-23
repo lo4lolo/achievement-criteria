@@ -1,5 +1,5 @@
 {
-  "version": "2.1.2",
+  "version": "2.1.3",
   "failures": [],
   "types": {
     "국어 관점 + 표현·제작·수행 규칙": 40,
@@ -76,7 +76,7 @@
     "음악 관점 + 비교·분류 규칙": 1
   },
   "count": 611,
-  "unlinked": 140,
+  "unlinked": 48,
   "checks": [
     "611 records preserved except 3 documented formula transcription repairs",
     "611 designs and all six panes render",

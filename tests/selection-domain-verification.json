@@ -1,0 +1,18 @@
+{
+  "result": "PASS",
+  "version": "2.1.2",
+  "scienceStandards": 102,
+  "scienceUnits": 32,
+  "checks": [
+    "science mapping and repaired merged cells",
+    "unreviewed guesses stay unassigned",
+    "empty legacy selection migration",
+    "select all / deselect all / reload",
+    "zero selection blocks four download formats",
+    "one selection produces four actual downloads",
+    "partial selection persistence",
+    "search fallback selection matches visible rows",
+    "explicit teacher deferral survives reload",
+    "no page errors"
+  ]
+}

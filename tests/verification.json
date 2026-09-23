@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
+  "version": "2.1.2",
   "failures": [],
   "types": {
     "국어 관점 + 표현·제작·수행 규칙": 40,
@@ -76,10 +76,12 @@
     "음악 관점 + 비교·분류 규칙": 1
   },
   "count": 611,
-  "unlinked": 68,
+  "unlinked": 140,
   "checks": [
     "611 records preserved except 3 documented formula transcription repairs",
     "611 designs and all six panes render",
+    "611 SUCCESS MDs use exact standards, levels and feedback; three plan modes render",
+    "SUCCESS mode, project form and actual SUCCESS MD download match",
     "611 MD/Word/CSV use exact standards and levels",
     "feedback edit persistence and export",
     "empty domain choice persistence",

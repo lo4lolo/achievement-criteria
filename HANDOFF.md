@@ -1,3 +1,15 @@
+# 2026-10-25 · v2.2.1 Sites 삽입 오류 수정 + 국어·영어 연계 재분석
+
+## 모두 비우기 오류
+- 원인: Google Sites 삽입 iframe의 sandbox 속성(allow-scripts allow-popups allow-forms allow-same-origin allow-popups-to-escape-sandbox allow-downloads allow-storage-access-by-user-activation)에 allow-modals가 없음 → confirm/alert/print가 창 없이 무시. 콘솔: "Ignored call to 'confirm()'. The document is sandboxed". 단독 주소(github.io)에서는 정상이라 이전 검사로 못 잡았음.
+- 수정: src/embed-safe.js — pageConfirm(<dialog> 확인창, Promise), pageNotice(토스트), printArea(삽입 상태면 Blob 새 탭에서 인쇄). build.py가 base의 cartClear·alert·window.print를 치환, review.js·review-v4.js의 confirm을 await pageConfirm으로 교체. **앞으로 confirm/alert/prompt/print를 직접 쓰지 말 것.**
+- 재현·검증: tests/embed-harness.html?src=앱주소 를 같은 서버에서 열고(Edge는 공개 출처→로컬 iframe을 막으므로 바깥은 localhost, 앱은 127.0.0.1) tests/embed.cjs 28항목. 수정 전 게시본으로 돌리면 비우기 실패가 재현됨.
+
+## 국어·영어 연계 재분석
+- 6개(자료 없음) → kind '연계': [2국01-05] 1-1~2-2, [2국05-04] 1-2~2-2, [4국02-06] 3-1~4-2(독서 단원), [4영01-09]·[4영02-03] 3-1~4-2, [6영01-09] 5-1~6-2. 각 항목 basis에 각론 PDF 쪽과 요지.
+- [6국02-05]: gs(5-2, 6-1) + also(5-1, 6-2). 필터·배지는 gs∪also, 화면은 '· 연계'로 구분.
+- 원본: 작업 폴더 02_…/작업표/integrated.json (make_final.py가 병합). 이미 여러 학기에 걸친 다른 태도 기준(예: [4영02-10], [6영02-10] 4개 학기)은 평가 계획 그대로 둠.
+
 # 2026-10-25 · v2.2.0 교과서 학년-학기
 
 ## 무엇을

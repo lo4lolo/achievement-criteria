@@ -1,4 +1,4 @@
-# 2022 개정 교육과정 초등 수업 설계 도우미 · v2.2.0
+# 2022 개정 교육과정 초등 수업 설계 도우미 · v2.2.1
 
 [기존 주소에서 사용하기](https://lo4lolo.github.io/achievement-criteria/)
 
@@ -13,7 +13,7 @@
 
 ## 교과서 학년-학기 (v2.2.0)
 
-교육과정 원문은 학년군까지만 정하므로, 각 기준을 실제로 다루는 학년-학기는 교과서 편성에서 가져왔습니다(data/grade-semester.json). 근거는 T셀파(천재교육·천재교과서) 교과별 「교수·학습 및 평가 운영 계획」이며, 국정 교과는 교육부 교과서, 검정 교과는 대표 출판사 1곳 기준입니다. 학교 교육과정이나 출판사에 따라 다를 수 있으며 공식 지정이 아닙니다. 배치 자료가 없는 6개 기준은 '자료 없음'으로 표시합니다. 원자료 문서는 저작권 때문에 저장소에 넣지 않았습니다.
+교육과정 원문은 학년군까지만 정하므로, 각 기준을 실제로 다루는 학년-학기는 교과서 편성에서 가져왔습니다(data/grade-semester.json). 근거는 T셀파(천재교육·천재교과서) 교과별 「교수·학습 및 평가 운영 계획」이며, 국정 교과는 교육부 교과서, 검정 교과는 대표 출판사 1곳 기준입니다. 학교 교육과정이나 출판사에 따라 다를 수 있으며 공식 지정이 아닙니다. 평가 계획에 단원 배치가 없는 태도·통합형 기준(국어 3, 영어 3)은 각론의 '성취기준 적용 시 고려 사항'과 교과서 활동을 근거로 '연계 지도'로 구분해 표시합니다. 원자료 문서는 저작권 때문에 저장소에 넣지 않았습니다.
 
 ## 효율화와 자료 구분
 
@@ -48,6 +48,8 @@
 | data/sources.json, sources/*.pdf | 공식 출처 색인과 원문 파일 |
 | tests/verify.cjs, tests/verification.json | 전 기준 구조·내보내기 및 UI 검증 |
 | tests/grade-semester.cjs | 학년-학기 데이터·필터·내보내기·390px 검증 |
+| tests/embed.cjs, tests/embed-harness.html | Google Sites와 같은 sandbox iframe 안 전체 기능 검증 |
+| src/embed-safe.js | 삽입 iframe에서 막히는 confirm·alert·print 대체(페이지 안 확인창, 새 탭 인쇄) |
 | src/ARCHITECTURE.md, CHANGELOG.md | 효율화 설계와 변경 기록 |
 
 QFT는 [Right Question Institute](https://rightquestion.org/what-is-the-qft/)를 참고했습니다. 화면·MD에 출처를 표시하며 공식 한국어 번역본을 뜻하지 않습니다. 교육과정 원문은 공식 PDF에서 확인하고, 구성한 설계 도움은 수업에 맞게 검토·수정하세요.

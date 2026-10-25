@@ -6,3 +6,9 @@
 .gs-chip{cursor:pointer}
 .gs-units{font-size:12.5px;margin:6px 0;line-height:1.6}
 #fGs .chip{font-variant-numeric:tabular-nums}
+.gs-linked{border-style:dashed}
+/* v2.2.1 페이지 안 확인창 */
+.page-confirm{border:1px solid var(--line);border-radius:10px;padding:18px 20px;max-width:min(420px,calc(100vw - 32px));background:var(--panel);color:var(--ink)}
+.page-confirm::backdrop{background:rgba(0,0,0,.35)}
+.page-confirm p{margin:0 0 14px;line-height:1.6}
+.page-confirm-act{display:flex;justify-content:flex-end;gap:8px}

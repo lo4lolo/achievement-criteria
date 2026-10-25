@@ -1,10 +1,10 @@
 {
   "name": "curriculum-design-helper",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "private": true,
   "scripts": {
     "build": "python src/build.py",
-    "test": "node tests/verify.cjs && node tests/selection-domain.cjs && node tests/other-subjects.cjs && node tests/grade-semester.cjs"
+    "test": "node tests/verify.cjs && node tests/selection-domain.cjs && node tests/other-subjects.cjs && node tests/grade-semester.cjs && node tests/embed.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"

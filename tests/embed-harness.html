@@ -1,0 +1,4 @@
+<!doctype html><meta charset="utf-8"><title>Google Sites 삽입 재현</title>
+<!-- Google Sites 삽입 iframe과 같은 sandbox 속성. ?src=앱 주소 (tests/embed.cjs가 사용) -->
+<iframe id="app" sandbox="allow-scripts allow-popups allow-forms allow-same-origin allow-popups-to-escape-sandbox allow-downloads allow-storage-access-by-user-activation" style="width:1300px;height:850px;border:0"></iframe>
+<script>document.getElementById('app').src=new URLSearchParams(location.search).get('src')||'../index.html';</script>

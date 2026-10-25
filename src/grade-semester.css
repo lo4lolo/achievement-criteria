@@ -1,0 +1,8 @@
+/* v2.2.0 교과서 학년-학기 */
+.gs-badge{color:var(--review);border-color:currentColor;font-variant-numeric:tabular-nums}
+.gs-tag{border-style:dashed}
+.gs-box{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0 0 14px;background:var(--panel)}
+.gs-line{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.gs-chip{cursor:pointer}
+.gs-units{font-size:12.5px;margin:6px 0;line-height:1.6}
+#fGs .chip{font-variant-numeric:tabular-nums}

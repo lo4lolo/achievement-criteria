@@ -12,3 +12,5 @@
 .page-confirm::backdrop{background:rgba(0,0,0,.35)}
 .page-confirm p{margin:0 0 14px;line-height:1.6}
 .page-confirm-act{display:flex;justify-content:flex-end;gap:8px}
+/* Google Sites 삽입 시 왼쪽 아래 ⓘ 아이콘이 바구니 버튼을 가리지 않게 */
+.in-frame .cart{padding-left:48px}

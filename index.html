@@ -358,6 +358,8 @@ html[data-theme="dark"]{--s1:#8fb0f0;--s1t:#1b2438;--s2:#c3a0e6;--s2t:#2a2034;--
 .page-confirm::backdrop{background:rgba(0,0,0,.35)}
 .page-confirm p{margin:0 0 14px;line-height:1.6}
 .page-confirm-act{display:flex;justify-content:flex-end;gap:8px}
+/* Google Sites 삽입 시 왼쪽 아래 ⓘ 아이콘이 바구니 버튼을 가리지 않게 */
+.in-frame .cart{padding-left:48px}
 
 </style>
 </head>
@@ -2819,6 +2821,8 @@ html[data-theme="dark"]{--s1:#8fb0f0;--s1t:#1b2438;--s2:#c3a0e6;--s2t:#2a2034;--
 .page-confirm::backdrop{background:rgba(0,0,0,.35)}
 .page-confirm p{margin:0 0 14px;line-height:1.6}
 .page-confirm-act{display:flex;justify-content:flex-end;gap:8px}
+/* Google Sites 삽입 시 왼쪽 아래 ⓘ 아이콘이 바구니 버튼을 가리지 않게 */
+.in-frame .cart{padding-left:48px}
 
 </style></head><body>`);
   H.push(`<h1>2022 개정 교육과정 수업·평가 계획 자료</h1>`);
@@ -3115,6 +3119,7 @@ function printArea(node,title){
   else pageNotice('새 탭에서 인쇄 창을 엽니다.');
   setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
+if(IN_FRAME)document.documentElement.classList.add('in-frame');
 
 /* Review-only interaction layer. Official records remain unchanged. */
 const REVIEW_CODE='[4사01-01]';

@@ -30,3 +30,4 @@ function printArea(node,title){
   else pageNotice('새 탭에서 인쇄 창을 엽니다.');
   setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
+if(IN_FRAME)document.documentElement.classList.add('in-frame');
